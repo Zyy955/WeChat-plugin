@@ -17,7 +17,7 @@ global.WeChat = { ws: {}, group: {}, config: {} }
 /** 生成默认配置文件 */
 let _path = process.cwd() + "/plugins/WeChat-plugin/config.yaml"
 if (!fs.existsSync(_path)) {
-    fs.writeFileSync(_path, ``, 'utf8')
+    fs.writeFileSync(_path, `# 端口\nport: 2955\n# 路径\npath: "/ComWeChat"`, 'utf8')
 }
 /** 加载配置文件到全局变量中 */
 WeChat.config = Yaml.parse(fs.readFileSync(_path, 'utf8'))
