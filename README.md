@@ -1,5 +1,7 @@
 微信应用端只支持在`Windows`环境运行，`Yunzai-Bot`没有要求
 
+![Visitor Count](https://profile-counter.glitch.me/Zyy955-WeChat-plugin/count.svg)
+
 咕咕咕~：
 - [√] 基础消息收发
 - [√] 消息转发 
