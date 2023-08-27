@@ -346,6 +346,31 @@ export let Yunzai = {
             // 未知...
         }
 
+        /** 上传之前进行检测图片大小，如果过大，进行压缩 */
+        if (type === "data") {
+            const mb = file.slice(1, -1).length / (1024 * 1024)
+            if (mb > 2.5) {
+                logger.mark(`WeChat-plugin：🚀 ~ 图片过大：${mb}...正在压缩中`)
+                const imagemin = (await import("imagemin")).default
+                const imageminJpegtran = (await import("imagemin-jpegtran")).default
+                const imageminPngquant = (await import("imagemin-pngquant")).default
+                if (!imagemin || !imageminJpegtran || !imageminPngquant) {
+                    /** 直接停了...反正过大发不出去 */
+                    return logger.error('WeChat-plugin：缺少依赖，请使 "pnpm install -P" 进行安装依赖')
+                } else {
+                    file = await imagemin.buffer(Buffer.from(file, 'base64'), {
+                        plugins: [
+                            imageminJpegtran({ quality: 0.5 }),
+                            imageminPngquant({ quality: [0.6, 0.8] })
+                        ]
+                    })
+                    logger.mark(`WeChat-plugin：🚀 ~ 压缩完成...正在重新发送`)
+                    file = Buffer.from(file).toString("base64")
+                }
+            }
+        }
+
+
         /** 上传文件 获取文件id 获取为空我也不知道为啥... */
         const file_id = (await WeChat.upload_file(type, name, file))?.file_id || ""
         /** 特殊处理表情包 */
