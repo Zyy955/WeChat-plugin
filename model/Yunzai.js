@@ -5,6 +5,7 @@ import lodash from 'lodash'
 import crypto from 'crypto'
 import { fileTypeFromBuffer } from "file-type"
 import { update } from "../../other/update.js"
+import cfg from "../../../lib/config/config.js"
 import PluginsLoader from "../../../lib/plugins/loader.js"
 
 /** 设置主人 */
@@ -12,7 +13,7 @@ let user = ""
 let sign = {}
 
 /** 全局变量WeChat */
-global.WeChat = { ws: {}, group: {}, config: {} }
+global.WeChat = { ws: {}, group: {}, config: {}, BotCfg: {} }
 
 /** 生成默认配置文件 */
 let _path = process.cwd() + "/plugins/WeChat-plugin/config.yaml"
@@ -105,9 +106,7 @@ export let Yunzai = {
                     message_zai.push({ type: "text", text: data.text })
                     break
                 case "mention":
-                    let qq = data.user_id
-                    if (data.user_id === self.user_id) qq = Bot.uin
-                    else message_zai.push({ type: "at", text: "", qq: qq })
+                    message_zai.push({ type: "at", text: "", qq: data.user_id })
                     break
                 case "mention_all":
                     break
@@ -356,6 +355,7 @@ export let Yunzai = {
             return { type: "image", data: { file_id: file_id } }
         }
     },
+    /** 设置主人 */
     add(e) {
         let cfg = fs.readFileSync("./config/config/other.yaml", "utf8")
         /** 使用正则表达式确认是TRSS还是Miao */
@@ -368,6 +368,121 @@ export let Yunzai = {
         }
         fs.writeFileSync("./config/config/other.yaml", cfg, "utf8")
         return [segment.at(user), "新主人好~(*/ω＼*)"]
+    },
+    /**
+ * 处理消息，加入自定义字段
+ * @param e.msg 文本消息，多行会自动拼接
+ * @param e.img 图片消息数组
+ * @param e.atBot 是否at机器人
+ * @param e.at 是否at，多个at 以最后的为准
+ * @param e.file 接受到的文件
+ * @param e.isPrivate 是否私聊
+ * @param e.isGroup 是否群聊
+ * @param e.isMaster 是否管理员
+ * @param e.logText 日志用户字符串
+ * @param e.logFnc  日志方法字符串
+
+ * 频道
+ * @param e.isGuild 是否频道
+ * @param e.at 支持频道 tiny_id
+ * @param e.atBot 支持频道
+
+ */
+    dealMsg(e) {
+        if (e.message) {
+            for (let val of e.message) {
+                switch (val.type) {
+                    case 'text':
+                        e.msg = (e.msg || '') + (val.text || '').replace(/^\s*[＃井#]+\s*/, '#').replace(/^\s*[\\*※＊]+\s*/, '*').trim()
+                        break
+                    case 'image':
+                        if (!e.img) {
+                            e.img = []
+                        }
+                        e.img.push(val.url)
+                        break
+                    case 'at':
+                        if (val.qq == e.bot.uin || val.qq == WeChat.BotCfg.user_id) {
+                            e.atBot = true
+                        } else if (val.id == e.bot.tiny_id || val.id == WeChat.BotCfg.user_id) {
+                            e.atBot = true
+                            /** 多个at 以最后的为准 */
+                        } else if (val.id) {
+                            e.at = val.id
+                        } else {
+                            e.at = val.qq
+                        }
+                        break
+                    case 'file':
+                        e.file = { name: val.name, fid: val.fid }
+                        break
+                }
+            }
+        }
+
+        e.logText = ''
+
+        if (e.message_type === 'private' || e.notice_type === 'friend') {
+            e.isPrivate = true
+
+            if (e.sender) {
+                e.sender.card = e.sender.nickname
+            } else {
+                e.sender = {
+                    card: e.friend?.nickname,
+                    nickname: e.friend?.nickname
+                }
+            }
+
+            e.logText = `[私聊][${e.sender.nickname}(${e.user_id})]`
+        }
+
+        if (e.message_type === 'group' || e.notice_type === 'group') {
+            e.isGroup = true
+            if (e.sender) {
+                e.sender.card = e.sender.card || e.sender.nickname
+            } else if (e.member) {
+                e.sender = {
+                    card: e.member.card || e.member.nickname
+                }
+            } else if (e.nickname) {
+                e.sender = {
+                    card: e.nickname,
+                    nickname: e.nickname
+                }
+            } else {
+                e.sender = {
+                    card: '',
+                    nickname: ''
+                }
+            }
+
+            if (!e.group_name) e.group_name = e.group?.name
+
+            e.logText = `[${e.group_name}(${e.sender.card})]`
+        } else if (e.detail_type === 'guild') {
+            e.isGuild = true
+        }
+
+        if (e.user_id && cfg.masterQQ.includes(Number(e.user_id) || e.user_id)) {
+            e.isMaster = true
+        }
+
+        /** 只关注主动at msg处理 */
+        if (e.msg && e.isGroup) {
+            let groupCfg = cfg.getGroup(e.group_id)
+            let alias = groupCfg.botAlias
+            if (!Array.isArray(alias)) {
+                alias = [alias]
+            }
+            for (let name of alias) {
+                if (e.msg.startsWith(name)) {
+                    e.msg = lodash.trimStart(e.msg, name).trim()
+                    e.hasAlias = true
+                    break
+                }
+            }
+        }
     },
     /** 处理回复,捕获发送失败异常 */
     reply(e) {
@@ -395,7 +510,7 @@ export let Yunzai = {
                     }
                     if (at === true) {
                         if (typeof e.user_id === "number")
-                            at = Number(e.user_id)
+                            at = Number(e.user_id) || e.user_id
                         else at = e.user_id.trim()
                     } else if (!isNaN(at)) {
                         if (e.isGuild) {
@@ -455,6 +570,31 @@ export let Yunzai = {
                 }
             }
         }
+    },
+    /** 判断黑白名单 */
+    checkBlack(e) {
+        let other = cfg.getOther()
+        let notice = cfg.getNotice()
+
+        if (e.test) return true
+
+        /** 黑名单qq */
+        if (other.blackQQ && other.blackQQ.includes(Number(e.user_id) || e.user_id)) {
+            return false
+        }
+
+        if (e.group_id) {
+            /** 白名单群 */
+            if (Array.isArray(other.whiteGroup) && other.whiteGroup.length > 0) {
+                return other.whiteGroup.includes(Number(e.group_id) || e.group_id)
+            }
+            /** 黑名单群 */
+            if (Array.isArray(other.blackGroup) && other.blackGroup.length > 0) {
+                return !other.blackGroup.includes(Number(e.group_id) || e.group_id)
+            }
+        }
+
+        return true
     }
 }
 
@@ -462,6 +602,10 @@ export let Yunzai = {
 
 /** 劫持回复方法 */
 PluginsLoader.reply = Yunzai.reply
+/** 劫持处理消息 */
+PluginsLoader.dealMsg = Yunzai.dealMsg
+/** 劫持黑白名单 */
+PluginsLoader.checkBlack = Yunzai.checkBlack
 
 /** 根据传入的group_id长度决定使用原方法还是自定义方法 */
 Bot.WeChat_Info = Bot.getGroupMemberInfo

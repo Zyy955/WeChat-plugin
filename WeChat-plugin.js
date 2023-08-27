@@ -145,6 +145,8 @@ server.on('connection', (ws) => {
             /** 状态更新 */
             case "status_update":
                 logger.info(Bot_name + "状态更新：ComWechat已连接")
+                /** 加载机器人自身id到全局变量中 */
+                WeChat.BotCfg = await WeChat.get_self_info()
                 /** 获取群聊列表啦~ */
                 const group_list = await WeChat.get_group_list()
                 for (let i of group_list) { WeChat.group[i.group_id] = i.group_name }
