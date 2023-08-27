@@ -9,7 +9,9 @@
 - [ ] 好友申请
 - [ ] 拍一拍
 
-可选安装：在`Yunzai`根目录执行，可更改启动命令为`node apps`来跳过登录QQ直接使用微信机器人，不影响原先的`node app`
+#### 可选安装
+
+在`Yunzai`根目录执行，可更改启动命令为`node apps`来跳过登录QQ直接使用微信机器人，不影响原先的`node app`
 ```
 curl -o "./apps.js" "https://gitee.com/Zyy955/Yunzai-Bot-plugin/raw/main/apps.js"
 ```
@@ -85,6 +87,13 @@ websocket_url = ["ws://localhost:2955/ComWeChat"]
 - 使用方法
   - 方法1：发送`#设置主人`，随后复制发送控制台的验证码即可成为主人
   - 方法2：发送`#设置主人@用户`，需要你是主人的情况下，指定此用户成为主人
+
+## 爱发电
+
+QQ群：`884587317`
+
+![爱发电](https://cdn.jsdelivr.net/gh/Zyy955/imgs/img/202308271209508.jpeg)
+
 
 ## 鸣谢
 
