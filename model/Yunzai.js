@@ -18,10 +18,18 @@ global.WeChat = { ws: {}, group: {}, config: {}, BotCfg: {} }
 /** 生成默认配置文件 */
 let _path = process.cwd() + "/plugins/WeChat-plugin/config.yaml"
 if (!fs.existsSync(_path)) {
-    fs.writeFileSync(_path, `# 端口\nport: 2955\n# 路径\npath: "/ComWeChat"`, 'utf8')
+    fs.writeFileSync(_path, `# 端口\nport: 2955\n# 路径\npath: "/ComWeChat"\n# 是否自动同意加好友 1-同意 0-不处理\nautoFriend: 1`, 'utf8')
 }
+
+/** 兼容旧配置 */
+let old_cfg = fs.readFileSync(_path, "utf8")
+if (!old_cfg.match(RegExp("# 是否自动同意加好友 1-同意 0-不处理\nautoFriend: 1"))) {
+    old_cfg = old_cfg + "\n# 是否自动同意加好友 1-同意 0-不处理\nautoFriend: 1"
+    fs.writeFileSync(_path, old_cfg, "utf8")
+}
+
 /** 加载配置文件到全局变量中 */
-WeChat.config = Yaml.parse(fs.readFileSync(_path, 'utf8'))
+WeChat.config = Yaml.parse(fs.readFileSync(_path, "utf8"))
 
 export class QQGuildBot extends plugin {
     constructor() {

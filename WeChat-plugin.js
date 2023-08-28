@@ -167,7 +167,12 @@ server.on('connection', (ws) => {
                 break
             /** 好友申请 */
             case "wx.friend_request":
-                logger.info(Bot_name + "好友申请：" + JSON.stringify(parse))
+                logger.info(Bot_name + "好友申请：" + `用户 ${user_id} 请求添加好友 请求理由：${parse.content}`)
+                /** 通过好友申请 */
+                if (WeChat.config.autoFriend == 1) {
+                    WeChat.accept_friend(parse.v3, parse.v4)
+                    logger.info(Bot_name + `已通过用户 ${user_id} 的好友申请`)
+                }
                 break
             /** 好友撤回消息 */
             case "private_message_delete":
