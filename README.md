@@ -1,3 +1,5 @@
+QQ交流群~欢迎加入：`884587317`
+
 微信应用端只支持在`Windows`环境运行，`Yunzai-Bot`没有要求
 
 ![Visitor Count](https://profile-counter.glitch.me/Zyy955-WeChat-plugin/count.svg)
@@ -93,8 +95,6 @@ websocket_url = ["ws://localhost:2955/ComWeChat"]
 默认自动通过好友申请，如果关闭请前往配置修改`plugins/WeChat-plugin/config.yaml`
 
 ## 爱发电
-
-QQ群：`884587317`
 
 ![爱发电](https://cdn.jsdelivr.net/gh/Zyy955/imgs/img/202308271209508.jpeg)
 
