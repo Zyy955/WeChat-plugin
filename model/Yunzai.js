@@ -98,6 +98,7 @@ export let Yunzai = {
     async message(WeChat_data) {
         let message_zai = []
         const { self, message } = WeChat_data
+        if (!message) return false
 
         for (let i of message) {
             const { type, data } = i
@@ -139,13 +140,9 @@ export let Yunzai = {
     },
     /** 消息转换为Yunzai格式 */
     async msg(data) {
-        const { group_id, detail_type, self, user_id } = data
-        let time = parseInt(Date.parse(data.time) / 1000)
+        const { group_id, detail_type, self, user_id, time } = data
         /** 构建Yunzai的message */
         let message = await this.message(data)
-
-        /** 判断消息中是否@了机器人 */
-        // const atBot = msg.mentions?.find(mention => mention.bot) || false`   
         const user_name = (await WeChat.get_group_member_info(group_id, user_id))?.user_name || ""
 
         let member = {
@@ -159,7 +156,6 @@ export let Yunzai = {
         }
 
         let e = {
-            message: [...message],
             post_type: "message",
             message_id: data.message_id,
             user_id: user_id,
@@ -288,6 +284,27 @@ export let Yunzai = {
                 return data.alt_message
             }
         }
+        /** 兼容message不存在的情况 */
+        if (message) e.message = [...message]
+        /** 私聊拍一拍 */
+        if (data.detail_type === "wx.get_private_poke") {
+            e.action = "戳了戳"
+            e.sub_type = "poke"
+            e.post_type = "notice"
+            e.notice_type = "private"
+            e.target_id = data.user_id
+            e.operator_id = data.from_user_id
+        }
+        /** 群聊拍一拍 */
+        if (data.detail_type === "wx.get_group_poke") {
+            e.action = "戳了戳"
+            e.sub_type = "poke"
+            e.post_type = "notice"
+            e.notice_type = "group"
+            e.target_id = data.user_id
+            e.operator_id = data.from_user_id
+        }
+
         return e
     },
     /** 转换格式为WeChat能使用的 */

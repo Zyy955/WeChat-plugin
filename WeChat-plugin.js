@@ -106,9 +106,11 @@ let WeChatBot = {
     },
     /** 发送消息 */
     async send_message(type, id, message) {
-        const msg_type = type === "private" ? "user_id" : "group_id"
-        const params = { detail_type: type, [msg_type]: id, message: message }
-        logger.info(`${Bot_name}发送${type === "private" ? "好友消息" : "群消息"}：[${id}] ${JSON.stringify(message)}`)
+        let msg_type = type === "private" ? "user_id" : "group_id"
+        /** 特殊处理拍一拍 */
+        let send_type = (type === "wx.get_group_poke") ? "group" : ((type === "wx.get_private_poke") ? "private" : type)
+        const params = { detail_type: send_type, [msg_type]: id, message: message }
+        logger.info(`${Bot_name}发送${send_type === "private" ? "好友消息" : "群消息"}：[${id}] ${JSON.stringify(message)}`)
         return await this.SendApi(params, "send_message")
     },
     /** 发送请求事件 */
@@ -165,50 +167,54 @@ server.on('connection', (ws) => {
                 break
             /** 好友申请 */
             case "wx.friend_request":
-                logger.info(Bot_name + "好友申请：" + parse)
+                logger.info(Bot_name + "好友申请：" + JSON.stringify(parse))
                 break
             /** 好友撤回消息 */
             case "private_message_delete":
-                logger.info(Bot_name + "撤回消息：" + parse)
+                logger.info(Bot_name + "撤回消息：" + JSON.stringify(parse))
                 break
             /** 群聊撤回消息 */
             case "group_message_delete":
-                logger.info(Bot_name + "撤回消息：" + parse)
+                logger.info(Bot_name + "撤回消息：" + JSON.stringify(parse))
                 break
             /** 好友接接收文件 */
             case "wx.get_private_file":
-                logger.info(Bot_name + "收到文件：" + parse)
+                logger.info(Bot_name + "收到文件：" + JSON.stringify(parse))
                 break
             /** 群聊接收文件 */
             case "wx.get_private_file":
-                logger.info(Bot_name + "收到文件：" + parse)
+                logger.info(Bot_name + "收到文件：" + JSON.stringify(parse))
                 break
             /** 好友收到红包 */
             case "wx.get_private_redbag":
-                logger.info(Bot_name + "收到红包：" + parse)
+                logger.info(Bot_name + "收到红包：" + JSON.stringify(parse))
                 break
             /** 群聊收到红包 */
             case "wx.get_group_redbag":
-                logger.info(Bot_name + "收到红包：" + parse)
+                logger.info(Bot_name + "收到红包：" + JSON.stringify(parse))
                 break
             /** 好友拍一拍 */
             case "wx.get_private_poke":
-                logger.info(Bot_name + "拍一拍：" + parse)
+                logger.info(Bot_name + `好友消息：${parse.from_user_id} 拍了拍 ${user_id}`)
+                /** 转换消息 交由云崽处理 */
+                PluginsLoader.deal(await Yunzai.msg(parse))
                 break
             /** 群聊拍一拍 */
             case "wx.get_group_poke":
-                logger.info(Bot_name + "拍一拍：" + parse)
+                logger.info(Bot_name + `群消息：${parse.from_user_id} 拍了拍 ${user_id}`)
+                /** 转换消息 交由云崽处理 */
+                PluginsLoader.deal(await Yunzai.msg(parse))
                 break
             /** 好友收到名片 */
             case "wx.get_private_card":
-                logger.info(Bot_name + "收到名片：" + parse)
+                logger.info(Bot_name + "收到名片：" + JSON.stringify(parse))
                 break
             /** 群聊收到名片 */
             case "wx.get_group_card":
-                logger.info(Bot_name + "收到名片：" + parse)
+                logger.info(Bot_name + "收到名片：" + JSON.stringify(parse))
                 break
             default:
-                logger.info(Bot_name + "未知事件：" + parse)
+                logger.info(Bot_name + "未知事件：" + JSON.stringify(parse))
                 break
         }
     })
