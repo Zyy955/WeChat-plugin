@@ -44,15 +44,21 @@ https://ghproxy.com/https://github.com/tom-snow/wechat-windows-versions/releases
 ```
 
 ### 下载禁用更新补丁
+
+<details><summary>点击展开：</summary>
+下载后禁用即可
+
 ```
 https://cup.lanzoui.com/pcwxnoupdate
 ```
+</details>
 
 ### 下载微信机器人应用端
 ```
 https://ghproxy.com/https://github.com/JustUndertaker/ComWeChatBotClient/releases/download/v0.0.8/ComWeChat-Client-v0.0.8.zip
 ```
 ### 配置机器人应用端
+<details><summary>点击展开：</summary>
 
 解压`ComWeChat-Client-v0.0.8.zip`
 
@@ -70,6 +76,8 @@ websocket_url = ["ws://localhost:2955/ComWeChat"]
 修改完成保存 运行`install.bat`
 
 运行`ComWeChat-Client-v0.0.8.exe`随后登录你的微信小号即可
+
+</details>
 
 ### 运行报错
 运行`install.bat`如果报错如下

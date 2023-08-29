@@ -3,6 +3,9 @@ import path from "path"
 import Yaml from "yaml"
 import lodash from 'lodash'
 import crypto from 'crypto'
+import imagemin from "imagemin"
+import imageminJpegtran from "imagemin-jpegtran"
+import imageminPngquant from "imagemin-pngquant"
 import { fileTypeFromBuffer } from "file-type"
 import { update } from "../../other/update.js"
 import cfg from "../../../lib/config/config.js"
@@ -376,22 +379,11 @@ export let Yunzai = {
             const mb = file.slice(1, -1).length / (1024 * 1024)
             if (mb > 2.5) {
                 logger.mark(`WeChat-plugin：🚀 ~ 图片过大：${mb}...正在压缩中`)
-                const imagemin = (await import("imagemin")).default
-                const imageminJpegtran = (await import("imagemin-jpegtran")).default
-                const imageminPngquant = (await import("imagemin-pngquant")).default
-                if (!imagemin || !imageminJpegtran || !imageminPngquant) {
-                    /** 直接停了...反正过大发不出去 */
-                    return logger.error('WeChat-plugin：缺少依赖，请使 "pnpm install -P" 进行安装依赖')
-                } else {
-                    file = await imagemin.buffer(Buffer.from(file, 'base64'), {
-                        plugins: [
-                            imageminJpegtran({ quality: 0.5 }),
-                            imageminPngquant({ quality: [0.6, 0.8] })
-                        ]
-                    })
-                    logger.mark(`WeChat-plugin：🚀 ~ 压缩完成...正在重新发送`)
-                    file = Buffer.from(file).toString("base64")
-                }
+                file = await imagemin.buffer(Buffer.from(file, 'base64'), {
+                    plugins: [imageminJpegtran({ quality: 0.5 }), imageminPngquant()]
+                })
+                logger.mark(`WeChat-plugin：🚀 ~ 压缩完成：${file.slice(1, -1).length / (1024 * 1024)}...正在重新发送`)
+                file = Buffer.from(file).toString("base64")
             }
         }
 
