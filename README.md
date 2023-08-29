@@ -102,6 +102,13 @@ websocket_url = ["ws://localhost:2955/ComWeChat"]
 
 默认自动通过好友申请，如果关闭请前往配置修改`plugins/WeChat-plugin/config.yaml`
 
+## 可选安装依赖
+
+应用端接口有限制上传图片大小，因该两个依赖安装失败较多，插件默认不安装压缩依赖，如果使用压缩图片功能，请在根目录执行
+```
+pnpm install
+```
+
 ## 爱发电
 
 ![爱发电](https://cdn.jsdelivr.net/gh/Zyy955/imgs/img/202308271209508.jpeg)

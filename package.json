@@ -9,7 +9,9 @@
   "dependencies": {
     "ws": "^8.13.0",
     "file-type": "^18.5.0",
-    "imagemin": "^8.0.1",
+    "imagemin": "^8.0.1"
+  },
+  "devDependencies": {
     "imagemin-jpegtran": "^7.0.0",
     "imagemin-pngquant": "^9.0.2"
   }
