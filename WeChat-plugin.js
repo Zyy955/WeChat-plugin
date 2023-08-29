@@ -231,6 +231,12 @@ server.on('connection', (ws) => {
     })
 })
 
+/** 捕获错误 */
+server.on('error', err => {
+    if (err.code === "EADDRINUSE") return logger.error(Bot_name + `端口${port}已占用，ws服务器无法启动，请手动解除被占用端口`)
+    return logger.error(Bot_name + "ws服务器错误：", err)
+})
+
 /** 加载一下插件到主体... */
 let ret = await Promise.allSettled([import('./model/Yunzai.js')])
 let apps = { Yunzai: ret[0].value[Object.keys(ret[0].value)[0]] }

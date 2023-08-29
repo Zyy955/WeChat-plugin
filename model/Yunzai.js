@@ -34,7 +34,7 @@ if (!old_cfg.match(RegExp("# 是否自动同意加好友 1-同意 0-不处理\na
 /** 加载配置文件到全局变量中 */
 WeChat.config = Yaml.parse(fs.readFileSync(_path, "utf8"))
 
-export class QQGuildBot extends plugin {
+export class WeChat_ extends plugin {
     constructor() {
         super({
             name: "WeChat插件",
@@ -64,7 +64,7 @@ export class QQGuildBot extends plugin {
             if (new_update.isUp)
                 setTimeout(() => new_update.restart(), 2000)
         }
-        return
+        return true
     }
 
     async master(e) {
