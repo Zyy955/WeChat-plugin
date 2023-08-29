@@ -154,7 +154,13 @@ export let Yunzai = {
         const { group_id, detail_type, self, user_id, time } = data
         /** 构建Yunzai的message */
         let message = await this.message(data)
-        const user_name = (await WeChat.get_group_member_info(group_id, user_id))?.user_name || ""
+        /** 获取用户名称 */
+        let user_name
+        if (detail_type === "private") {
+            user_name = (await WeChat.get_user_info(user_id))?.user_name || ""
+        } else {
+            user_name = (await WeChat.get_group_member_info(group_id, user_id))?.user_name || ""
+        }
 
         let member = {
             info: {
@@ -380,7 +386,7 @@ export let Yunzai = {
             if (mb > 2.5) {
                 logger.mark(`WeChat-plugin：🚀 ~ 图片过大：${mb}...正在压缩中`)
                 file = await imagemin.buffer(Buffer.from(file, 'base64'), {
-                    plugins: [imageminJpegtran({ quality: 0.5 }), imageminPngquant()]
+                    plugins: [imageminJpegtran({ quality: 0.5 }), imageminPngquant({ quality: [0.2, 0.3] })]
                 })
                 logger.mark(`WeChat-plugin：🚀 ~ 压缩完成：${file.slice(1, -1).length / (1024 * 1024)}...正在重新发送`)
                 file = Buffer.from(file).toString("base64")
