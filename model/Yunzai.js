@@ -4,6 +4,7 @@ import Yaml from "yaml"
 import lodash from 'lodash'
 import crypto from 'crypto'
 import imagemin from "imagemin"
+import { execSync } from "child_process"
 import { fileTypeFromBuffer } from "file-type"
 import { update } from "../../other/update.js"
 import cfg from "../../../lib/config/config.js"
@@ -44,6 +45,10 @@ export class WeChat_ extends plugin {
                     permission: "master"
                 },
                 {
+                    reg: /^#微信更新日志$/gi,
+                    fnc: 'update_log',
+                },
+                {
                     reg: /^#设置主人$/,
                     fnc: 'master'
                 }
@@ -63,6 +68,17 @@ export class WeChat_ extends plugin {
                 setTimeout(() => new_update.restart(), 2000)
         }
         return true
+    }
+
+    async update_log(e) {
+        let new_update = new update()
+        new_update.e = e
+        new_update.reply = this.reply
+        const name = "WeChat-plugin"
+        if (new_update.getPlugin(name)) {
+            this.e.reply(await new_update.getLog(name))
+        }
+        return
     }
 
     async master(e) {

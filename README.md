@@ -90,6 +90,7 @@ websocket_url = ["ws://localhost:2955/ComWeChat"]
 ```
 #微信插件更新
 #微信插件强制更新
+#微信更新日志
 ```
 
 ## 设置主人
