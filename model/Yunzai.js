@@ -3,7 +3,6 @@ import path from "path"
 import Yaml from "yaml"
 import lodash from 'lodash'
 import crypto from 'crypto'
-import imagemin from "imagemin"
 import { execSync } from "child_process"
 import { fileTypeFromBuffer } from "file-type"
 import { update } from "../../other/update.js"
@@ -392,33 +391,6 @@ export let Yunzai = {
             name = file.match(/\/([^/]+)$/)[1]
         } else {
             // 未知...
-        }
-
-        /** 上传之前进行检测图片大小，如果过大，进行压缩 */
-        if (type === "data") {
-            const mb = file.slice(1, -1).length / (1024 * 1024)
-            if (mb > 2.5) {
-
-                let imageminJpegtran
-                let imageminPngquant
-                try {
-                    imageminJpegtran = (await import("imagemin-jpegtran")).default
-                    imageminPngquant = (await import("imagemin-pngquant")).default
-                } catch (err) {
-                    logger.error(err.message)
-                }
-
-                if (!imagemin || !imageminJpegtran || !imageminPngquant) {
-                    return logger.error("图片过大，发送失败...如需使用图像压缩功能，请在Yunzai根目录执行 pnpm install 进行安装图像压缩依赖")
-                } else {
-                    logger.mark(`WeChat-plugin：🚀 ~ 图片过大：${mb}...正在压缩中`)
-                    file = await imagemin.buffer(Buffer.from(file, 'base64'), {
-                        plugins: [imageminJpegtran({ quality: 0.5 }), imageminPngquant({ quality: [0.2, 0.3] })]
-                    })
-                    logger.mark(`WeChat-plugin：🚀 ~ 压缩完成：${file.slice(1, -1).length / (1024 * 1024)}...正在重新发送`)
-                    file = Buffer.from(file).toString("base64")
-                }
-            }
         }
 
         /** 上传文件 获取文件id 获取为空我也不知道为啥... */
