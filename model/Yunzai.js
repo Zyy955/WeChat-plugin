@@ -1,8 +1,8 @@
 import fs from "fs"
 import path from "path"
 import Yaml from "yaml"
-import lodash from 'lodash'
-import crypto from 'crypto'
+import lodash from "lodash"
+import crypto from "crypto"
 import { execSync } from "child_process"
 import { fileTypeFromBuffer } from "file-type"
 import { update } from "../../other/update.js"
@@ -120,24 +120,34 @@ export class WeChat_ extends plugin {
 export let Yunzai = {
     /** 构建Yunzai的message */
     async message(WeChat_data) {
-        let message_zai = []
-        const { self, message } = WeChat_data
-        if (!message) return false
+        let atme = false
+        let message = []
+        let raw_message = ""
+        const msg = WeChat_data.message
+        if (!msg) return false
 
-        for (let i of message) {
+        for (let i of msg) {
             const { type, data } = i
             switch (type) {
                 case "text":
-                    message_zai.push({ type: "text", text: data.text })
+                    raw_message += data.text
+                    message.push({ type: "text", text: data.text })
                     break
                 case "mention":
-                    message_zai.push({ type: "at", text: "", qq: data.user_id })
+                    if (data.user_id === WeChat.BotCfg.user_id) {
+                        atme = true
+                        raw_message += `@${WeChat.BotCfg.user_name}`
+                    } else {
+                        raw_message += `@${data.user_id}`
+                        message.push({ type: "at", text: "", qq: data.user_id })
+                    }
                     break
                 case "mention_all":
                     break
                 case "image":
                     const image = await WeChat.get_file("url", data.file_id)
-                    message_zai.push({ type: "image", name: image.name, url: image.url })
+                    raw_message += `{image:${image.name}}`
+                    message.push({ type: "image", name: image.name, url: image.url })
                     break
                 case "voice":
                     break
@@ -152,7 +162,8 @@ export let Yunzai = {
                 case "reply":
                     break
                 case "wx.emoji":
-                    message_zai.push({ type: "emoji", text: data.file_id })
+                    raw_message += `{emoji:${data.file_id}}`
+                    message.push({ type: "emoji", text: data.file_id })
                     break
                 case "wx.link":
                     break
@@ -160,13 +171,13 @@ export let Yunzai = {
                     break
             }
         }
-        return message_zai
+        return { message, raw_message, atme }
     },
     /** 消息转换为Yunzai格式 */
     async msg(data) {
         const { group_id, detail_type, self, user_id, time } = data
         /** 构建Yunzai的message */
-        let message = await this.message(data)
+        let { message, raw_message, atme } = await this.message(data)
         /** 获取用户名称 */
         let user_name
         if (detail_type === "private") {
@@ -190,6 +201,7 @@ export let Yunzai = {
             message_id: data.message_id,
             user_id: user_id,
             time,
+            raw_message: data.alt_message,
             message_type: detail_type,
             sub_type: detail_type === "group" ? "normal" : "friend",
             sender: {
@@ -203,7 +215,7 @@ export let Yunzai = {
             self_id: self.user_id,
             font: "宋体",
             seq: data.message_id,
-            atme: "",
+            atme: atme,
             member,
             friend: {
                 recallMsg: () => {
@@ -211,9 +223,15 @@ export let Yunzai = {
                 },
                 makeForwardMsg: async (forwardMsg) => {
                     return await e.group.makeForwardMsg(forwardMsg)
+                },
+                getChatHistory: (seq, num) => {
+                    return ["message", "test"]
                 }
             },
             group: {
+                getChatHistory: (seq, num) => {
+                    return ["message", "test"]
+                },
                 recallMsg: () => {
                     return
                 },
@@ -678,5 +696,70 @@ Bot.getGroupMemberInfo = async (group_id, id) => {
         }
     } else {
         return Bot.WeChat_Info(group_id, id)
+    }
+}
+
+/** 对喵云崽的转发进行劫持修改，兼容最新的icqq转发 */
+const zai_name = JSON.parse(fs.readFileSync('./package.json', 'utf-8')).name
+if (zai_name !== "miao-yunzai") {
+    /**
+     * 制作转发消息
+     * @param e 消息事件
+     * @param msg 消息数组
+     * @param dec 转发描述
+     * @param msgsscr 转发信息是否伪装
+     */
+    common.makeForwardMsg = async function makeForwardMsg(e, msg = [], dec = '', msgsscr = false) {
+
+        if (!Array.isArray(msg)) msg = [msg]
+
+        let name = msgsscr ? e.sender.card || e.user_id : Bot.nickname
+        let id = msgsscr ? e.user_id : Bot.uin
+
+        if (e.isGroup) {
+            let info = await e.bot.getGroupMemberInfo(e.group_id, id)
+            name = info.card || info.nickname
+        }
+
+        let userInfo = {
+            user_id: id,
+            nickname: name
+        }
+
+        let forwardMsg = []
+        for (const message of msg) {
+            if (!message) continue
+            forwardMsg.push({
+                ...userInfo,
+                message: message
+            })
+        }
+
+
+        /** 制作转发内容 */
+        if (e?.group?.makeForwardMsg) {
+            forwardMsg = await e.group.makeForwardMsg(forwardMsg)
+        } else if (e?.friend?.makeForwardMsg) {
+            forwardMsg = await e.friend.makeForwardMsg(forwardMsg)
+        } else {
+            return msg.join('\n')
+        }
+
+        if (dec) {
+            /** 处理描述 */
+            if (typeof (forwardMsg.data) === 'object') {
+                let detail = forwardMsg.data?.meta?.detail
+                if (detail) {
+                    detail.news = [{ text: dec }]
+                }
+            } else {
+                forwardMsg.data = forwardMsg.data
+                    .replace(/\n/g, '')
+                    .replace(/<title color="#777777" size="26">(.+?)<\/title>/g, '___')
+                    .replace(/___+/, `<title color="#777777" size="26">${dec}</title>`)
+            }
+        }
+
+        return forwardMsg
     }
 }

@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto"
-import { WebSocketServer } from 'ws'
+import { WebSocketServer } from "ws"
 import { Yunzai } from "./model/Yunzai.js"
+import "./model/puppeteer.js"
 import PluginsLoader from "../../lib/plugins/loader.js"
 
 const { port, path } = WeChat.config

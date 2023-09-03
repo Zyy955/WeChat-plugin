@@ -1,5 +1,9 @@
 QQ交流群~欢迎加入：`884587317`
 
+- 如果您对这个项目感到满意并认为它对你有所帮助，请给我一个`Star`！
+
+- 您的认可是我持续更新的动力~非常感谢您的支持！
+
 微信应用端只支持在`Windows`环境运行，`Yunzai-Bot`没有要求
 
 ![Visitor Count](https://profile-counter.glitch.me/Zyy955-WeChat-plugin/count.svg)
@@ -11,6 +15,19 @@ QQ交流群~欢迎加入：`884587317`
 - [√] 好友申请
 - [√] 拍一拍
 
+# 使用必读
+
+插件是根据`Miao-Yunzai`进行开发，兼容`喵喵`维护的`Yunzai-Bot`。
+
+由于`Yunzai-Bot`结构不一致，许多地方并未进行适配，出现bug是正常现象，有问题请反馈，我尽量解决~
+
+应用端和云崽都可以单独启动，并没有必须先启动谁的说法，应用端显示`远程计算机拒绝访问是因为云崽这边没有启动或者没有安装插件`。
+
+应用端的作用是收发消息，但是并不处理消息。
+
+云崽的作用是将应用端发送过来的消息进行处理，并进行对应的回复，二者属于依赖关系，本插件的作用是起一个桥梁作用。
+
+
 #### 可选安装
 
 在`Yunzai`根目录执行，可更改启动命令为`node apps`来跳过登录QQ直接使用微信机器人，不影响原先的`node app`
@@ -18,7 +35,7 @@ QQ交流群~欢迎加入：`884587317`
 curl -o "./apps.js" "https://gitee.com/Zyy955/Yunzai-Bot-plugin/raw/main/apps.js"
 ```
 
-## 安装插件
+## 1.安装插件
 
 在`Yunzai-Bot`根目录执行，任选其一
 
@@ -32,9 +49,11 @@ Github：
 git clone --depth 1 https://github.com/Zyy955/WeChat-plugin ./plugins/WeChat-plugin && pnpm install -P
 ```
 
-## 应用端安装
+安装好插件，可以进行启动云崽，你也可以在应用端配置完毕后启动云崽。
 
-### 下载微信
+## 2.应用端安装
+
+#### 2.1 下载微信
 仅支持`3.7.0.30`版本
 
 如果担心和电脑现有的高版本冲突可在下载安装包之后`直接解压exe安装包`，运行`WeChat.exe`即可
@@ -43,9 +62,10 @@ git clone --depth 1 https://github.com/Zyy955/WeChat-plugin ./plugins/WeChat-plu
 https://ghproxy.com/https://github.com/tom-snow/wechat-windows-versions/releases/download/v3.7.0.30/WeChatSetup-3.7.0.30.exe
 ```
 
-### 下载禁用更新补丁
+#### 2.2 下载禁用更新补丁
 
 <details><summary>点击展开：</summary>
+
 下载后禁用即可
 
 ```
@@ -53,11 +73,14 @@ https://cup.lanzoui.com/pcwxnoupdate
 ```
 </details>
 
-### 下载微信机器人应用端
+#### 2.3 下载微信机器人应用端
 ```
 https://ghproxy.com/https://github.com/JustUndertaker/ComWeChatBotClient/releases/download/v0.0.8/ComWeChat-Client-v0.0.8.zip
 ```
-### 配置机器人应用端
+#### 2.4 配置机器人应用端
+
+请严格按照我所给出的配置进行修改！
+
 <details><summary>点击展开：</summary>
 
 解压`ComWeChat-Client-v0.0.8.zip`
@@ -73,18 +96,20 @@ websocket_url = ["ws://127.0.0.1:8080/onebot/v12/ws/"]
 修改为
 websocket_url = ["ws://localhost:2955/ComWeChat"]
 ```
-修改完成保存 运行`install.bat`
-
-运行`ComWeChat-Client-v0.0.8.exe`随后登录你的微信小号即可
+修改完成保存
 
 </details>
 
-### 运行报错
-运行`install.bat`如果报错如下
+#### 2.5 运行`install.bat`
+
+注：如运行`install.bat`报错，如下：
 ![报错](https://user-images.githubusercontent.com/74231782/230714709-95faea89-ac18-44fb-a704-fb114c675800.png)
 
 请安装[vc_redist.x86](https://download.microsoft.com/download/6/D/F/6DF3FF94-F7F9-4F0B-838C-A328D1A7D0EE/vc_redist.x86.exe)
 
+#### 2.6 启动应用端
+
+运行`ComWeChat-Client-v0.0.8.exe`随后登录你的微信小号即可
 
 ## 更新插件
 ```
@@ -102,13 +127,6 @@ websocket_url = ["ws://localhost:2955/ComWeChat"]
 #### 好友申请
 
 默认自动通过好友申请，如果关闭请前往配置修改`plugins/WeChat-plugin/config.yaml`
-
-## 可选安装依赖
-
-应用端接口有限制上传图片大小，因该两个依赖安装失败较多，插件默认不安装压缩依赖，如果使用压缩图片功能，请在根目录执行
-```
-pnpm install
-```
 
 ## 爱发电
 
