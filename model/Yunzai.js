@@ -24,7 +24,7 @@ if (!fs.existsSync(_path)) {
 
 /** 兼容旧配置 */
 let old_cfg = fs.readFileSync(_path, "utf8")
-if (!old_cfg.match(RegExp("# 是否自动同意加好友 1-同意 0-不处理\nautoFriend: 1"))) {
+if (!old_cfg.match(RegExp("autoFriend:"))) {
     old_cfg = old_cfg + "\n# 是否自动同意加好友 1-同意 0-不处理\nautoFriend: 1"
     fs.writeFileSync(_path, old_cfg, "utf8")
 }
