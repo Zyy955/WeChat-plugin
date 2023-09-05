@@ -7,7 +7,9 @@ import { execSync } from "child_process"
 import { fileTypeFromBuffer } from "file-type"
 import { update } from "../../other/update.js"
 import cfg from "../../../lib/config/config.js"
+import common from "../../../lib/common/common.js"
 import PluginsLoader from "../../../lib/plugins/loader.js"
+
 
 /** 设置主人 */
 let user = ""
@@ -660,56 +662,9 @@ export let Yunzai = {
         }
 
         return true
-    }
-}
-
-
-
-/** 劫持回复方法 */
-PluginsLoader.reply = Yunzai.reply
-/** 劫持处理消息 */
-PluginsLoader.dealMsg = Yunzai.dealMsg
-/** 劫持黑白名单 */
-PluginsLoader.checkBlack = Yunzai.checkBlack
-
-/** 根据传入的group_id长度决定使用原方法还是自定义方法 */
-Bot.WeChat_Info = Bot.getGroupMemberInfo
-Bot.getGroupMemberInfo = async (group_id, id) => {
-    if (group_id.toString().length > 10) {
-        return {
-            group_id: group_id,
-            user_id: id,
-            nickname: "WeChat-Bot",
-            card: "",
-            sex: "female",
-            age: 6,
-            join_time: "",
-            last_sent_time: "",
-            level: 1,
-            role: "member",
-            title: "",
-            title_expire_time: "",
-            shutup_time: 0,
-            update_time: "",
-            area: "南极洲",
-            rank: "潜水",
-        }
-    } else {
-        return Bot.WeChat_Info(group_id, id)
-    }
-}
-
-/** 对喵云崽的转发进行劫持修改，兼容最新的icqq转发 */
-const zai_name = JSON.parse(fs.readFileSync('./package.json', 'utf-8')).name
-if (zai_name !== "miao-yunzai") {
-    /**
-     * 制作转发消息
-     * @param e 消息事件
-     * @param msg 消息数组
-     * @param dec 转发描述
-     * @param msgsscr 转发信息是否伪装
-     */
-    common.makeForwardMsg = async function makeForwardMsg(e, msg = [], dec = '', msgsscr = false) {
+    },
+    /** 新转发消息 */
+    async makeForwardMsg(e, msg = [], dec = '', msgsscr = false) {
 
         if (!Array.isArray(msg)) msg = [msg]
 
@@ -761,5 +716,98 @@ if (zai_name !== "miao-yunzai") {
         }
 
         return forwardMsg
+    }
+}
+
+
+
+/** 劫持回复方法 */
+PluginsLoader.reply = Yunzai.reply
+/** 劫持处理消息 */
+PluginsLoader.dealMsg = Yunzai.dealMsg
+/** 劫持黑白名单 */
+PluginsLoader.checkBlack = Yunzai.checkBlack
+
+/** 根据传入的group_id长度决定使用原方法还是自定义方法 */
+Bot.WeChat_Info = Bot.getGroupMemberInfo
+Bot.getGroupMemberInfo = async (group_id, id) => {
+    if (group_id.toString().length > 10) {
+        return {
+            group_id: group_id,
+            user_id: id,
+            nickname: "WeChat-Bot",
+            card: "",
+            sex: "female",
+            age: 6,
+            join_time: "",
+            last_sent_time: "",
+            level: 1,
+            role: "member",
+            title: "",
+            title_expire_time: "",
+            shutup_time: 0,
+            update_time: "",
+            area: "南极洲",
+            rank: "潜水",
+        }
+    } else {
+        return Bot.WeChat_Info(group_id, id)
+    }
+}
+
+/** 对喵云崽的转发进行劫持修改，兼容最新的icqq转发 */
+const zai_name = JSON.parse(fs.readFileSync('./package.json', 'utf-8')).name
+if (zai_name !== "miao-yunzai") {
+    /**
+     * 制作转发消息
+     * @param e 消息事件
+     * @param msg 消息数组
+     * @param dec 转发描述
+     * @param msgsscr 转发信息是否伪装
+     */
+    /** common转发 */
+    common.makeForwardMsg = async function (e, msg = [], dec = '', msgsscr = false) {
+        return await Yunzai.makeForwardMsg(e, msg, dec, msgsscr)
+    }
+    /** 日志 */
+    const sendLog = (await import("../../other/sendLog.js")).sendLog
+    sendLog.prototype.makeForwardMsg = async function (title, msg) {
+        return await Yunzai.makeForwardMsg(this.e, [title, msg], title, false)
+    }
+
+    /** 更新日志 */
+    update.prototype.makeForwardMsg = async function (title, msg = [], dec = '', msgsscr = false) {
+        return await Yunzai.makeForwardMsg(this.e, [title, msg], title, msgsscr)
+    }
+
+    /** 表情列表 */
+    const add = (await import("../../system/add.js")).add
+    add.prototype.makeForwardMsg = async function (qq, title, msg, end = '') {
+        return await Yunzai.makeForwardMsg(this.e, [title, msg], title, false)
+    }
+
+    /** 角色别名 */
+    const abbrSet = (await import("../../genshin/apps/abbrSet.js")).abbrSet
+    abbrSet.prototype.abbrList = async function () {
+        let gsCfg = (await import("../../genshin/model/gsCfg.js")).default
+        let role = gsCfg.getRole(this.e.msg, '#|别名|昵称')
+
+        if (!role) return false
+
+        let name = gsCfg.getdefSet('role', 'name')[role.roleId]
+        let nameUser = gsCfg.getConfig('role', 'name')[role.name] ?? []
+
+        let list = lodash.uniq([...name, ...nameUser])
+
+        let msg = []
+        for (let i in list) {
+            let num = Number(i) + 1
+            msg.push(`${num}.${list[i]}\n`)
+        }
+
+        let title = `${role.name}别名，${list.length}个`
+        msg = await Yunzai.makeForwardMsg(this.e, msg, title, false)
+
+        await this.e.reply(msg)
     }
 }

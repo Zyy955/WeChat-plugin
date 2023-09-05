@@ -13,7 +13,9 @@ QQ交流群~欢迎加入：`884587317`
 - [√] 消息转发 
 - [√] 好友消息
 - [√] 好友申请
-- [√] 拍一拍
+- [√] 拍一拍 `喵云崽`暂不支持
+- [√] 支持喵喵维护版`云崽` => `喵云崽`
+  - [√] 劫持`喵云崽`本体所有转发消息，使所有转发消息可正常发送
 
 # 使用必读
 
@@ -21,7 +23,9 @@ QQ交流群~欢迎加入：`884587317`
 
 由于`Yunzai-Bot`结构不一致，许多地方并未进行适配，出现bug是正常现象，有问题请反馈，我尽量解决~
 
-应用端和云崽都可以单独启动，并没有必须先启动谁的说法，应用端显示`远程计算机拒绝访问是因为云崽这边没有启动或者没有安装插件`。
+应用端和云崽都可以单独启动，并没有必须先启动谁的说法
+
+应用端显示`远程计算机拒绝访问`是因为云崽这边没有启动或者没有安装插件。
 
 应用端的作用是收发消息，但是并不处理消息。
 
@@ -64,14 +68,11 @@ https://ghproxy.com/https://github.com/tom-snow/wechat-windows-versions/releases
 
 #### 2.2 下载禁用更新补丁
 
-<details><summary>点击展开：</summary>
-
-下载后禁用即可
+下载后启动禁用即可
 
 ```
 https://cup.lanzoui.com/pcwxnoupdate
 ```
-</details>
 
 #### 2.3 下载微信机器人应用端
 ```
@@ -80,8 +81,6 @@ https://ghproxy.com/https://github.com/JustUndertaker/ComWeChatBotClient/release
 #### 2.4 配置机器人应用端
 
 请严格按照我所给出的配置进行修改！
-
-<details><summary>点击展开：</summary>
 
 解压`ComWeChat-Client-v0.0.8.zip`
 
@@ -98,7 +97,6 @@ websocket_url = ["ws://localhost:2955/ComWeChat"]
 ```
 修改完成保存
 
-</details>
 
 #### 2.5 运行`install.bat`
 
