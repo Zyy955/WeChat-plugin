@@ -107,9 +107,16 @@ let WeChatBot = {
     },
     /** 发送消息 */
     async send_message(type, id, message) {
-        let msg_type = type === "private" ? "user_id" : "group_id"
-        /** 特殊处理拍一拍 */
-        let send_type = (type === "wx.get_group_poke") ? "group" : ((type === "wx.get_private_poke") ? "private" : type)
+        const ty = {
+            "group": "group",
+            "private": "private",
+            "wx.get_group_poke": "group",
+            "wx.get_private_poke": "private"
+        }
+        /** 群消息、好友消息 */
+        let send_type = ty[type] ?? "group"
+        /** 群id、好友id */
+        let msg_type = send_type === "private" ? "user_id" : "group_id"
         const params = { detail_type: send_type, [msg_type]: id, message: message }
         logger.info(`${Bot_name}发送${send_type === "private" ? "好友消息" : "群消息"}：[${id}] ${JSON.stringify(message)}`)
         return await this.SendApi(params, "send_message")
