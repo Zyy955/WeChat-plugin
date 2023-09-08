@@ -1,4 +1,3 @@
-import fs from "fs"
 import lodash from "lodash"
 
 /** 修改一些插件的渲染精度 */
@@ -7,10 +6,9 @@ let _plugins = {
 }
 
 let Puppeteer
-const zai_name = JSON.parse(fs.readFileSync('./package.json', 'utf-8')).name
 
 /** 喵崽 */
-if (zai_name === "miao-yunzai") {
+if (WeChat.Yz.name === "miao-yunzai") {
     Puppeteer = (await import("../../../renderers/puppeteer/lib/puppeteer.js")).default
     /** 劫持原方法 */
     Puppeteer.prototype.screenshot = async function (name, data = {}) {
@@ -137,7 +135,7 @@ if (zai_name === "miao-yunzai") {
     }
 }
 /** 喵云崽 */
-else if (zai_name === "yunzai") {
+else if (WeChat.Yz.name === "yunzai") {
     Puppeteer = (await import("../../../lib/puppeteer/puppeteer.js")).default
     /** 劫持原方法 */
     Puppeteer.screenshot = async function (name, data = {}) {
