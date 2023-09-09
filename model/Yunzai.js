@@ -99,7 +99,7 @@ export let Yunzai = {
             },
             group_id: group_id,
             group_name: WeChat.group[group_id],
-            self_id: self.user_id,
+            self_id: WeChat.BotCfg.user_id,
             font: "宋体",
             seq: data.message_id,
             atme: atme,
@@ -109,11 +109,14 @@ export let Yunzai = {
                     return
                 },
                 makeForwardMsg: async (forwardMsg) => {
-                    return await e.group.makeForwardMsg(forwardMsg)
+                    return await Yunzai.makeForwardMsg(forwardMsg, data)
                 },
                 getChatHistory: (seq, num) => {
                     return ["message", "test"]
-                }
+                },
+                sendMsg: async (reply) => {
+                    return await Yunzai.reply(reply, data)
+                },
             },
             group: {
                 getChatHistory: (seq, num) => {
@@ -123,101 +126,17 @@ export let Yunzai = {
                     return
                 },
                 sendMsg: async (reply) => {
-                    return await e.reply(reply)
+                    return await Yunzai.reply(reply, data)
                 },
                 makeForwardMsg: async (forwardMsg) => {
-                    const messages = {}
-                    const newmsg = []
-                    const content = data.alt_message
-
-                    /** 针对无限套娃的转发进行处理 */
-                    for (const i_msg of forwardMsg) {
-                        /** message -> 对象 -> data.type=test ->套娃转发 */
-                        const formsg = i_msg?.message
-                        if (formsg && typeof formsg === "object") {
-                            /** 套娃转发 */
-                            if (formsg?.data?.type === "test") {
-                                newmsg.push(...formsg.msg)
-                            } else if (Array.isArray(formsg)) {
-                                for (const arr of formsg) {
-                                    if (typeof arr === "string") newmsg.push({ type: "forward", text: arr })
-                                    else newmsg.push(arr)
-                                }
-                            } else {
-                                /** 普通对象 */
-                                newmsg.push(formsg)
-                            }
-                        } else {
-                            /** 日志特殊处理 */
-                            if (/^#.*日志$/.test(content)) {
-                                let splitMsg
-                                for (const i of forwardMsg) {
-                                    splitMsg = i.message.split("\n[").map(element => {
-                                        if (element.length > 100)
-                                            element = element.substring(0, 100) + "日志过长..."
-                                        return { type: "forward", text: `[${element.trim()}\n` }
-                                    })
-                                }
-                                newmsg.push(...splitMsg.slice(0, 50))
-                            } else {
-                                /** 正常文本 */
-                                newmsg.push({ type: "forward", text: formsg })
-                            }
-                        }
-                    }
-                    /** 对一些重复元素进行去重 */
-                    messages.msg = Array.from(new Set(newmsg.map(JSON.stringify))).map(JSON.parse)
-                    messages.data = { type: "test", text: "forward" }
-                    return messages
+                    return await Yunzai.makeForwardMsg(forwardMsg, data)
                 }
             },
             recall: () => {
                 return
             },
             reply: async (reply) => {
-                /** 转换格式 */
-                let msg = []
-                /** 转发消息 */
-                if (reply?.data?.type === "test") {
-                    for (let i of reply.msg) {
-                        switch (i.type) {
-                            case "forward":
-                                await WeChat.send_message(detail_type, group_id || user_id, { type: "text", data: { text: i.text } })
-                                break
-                            case "image":
-                                const image_msg = await this.get_file_id(i)
-                                await WeChat.send_message(detail_type, group_id || user_id, image_msg)
-                                break
-                            default:
-                                break
-                        }
-                    }
-                } else {
-                    /** 纯文本 */
-                    if (typeof reply === "string") {
-                        msg = { type: "text", data: { text: reply } }
-                    }
-                    /** base64二进制 */
-                    else if (reply instanceof Uint8Array) {
-                        msg = await this.get_file_id({ type: "image", file: reply })
-                    }
-                    /** 对象 */
-                    else if (typeof reply === "object") {
-                        /** 判断是否可迭代 */
-                        if (reply !== null && typeof reply[Symbol.iterator] === 'function') {
-                            for (let i of reply) {
-                                const msg_ = await this.type_msg(detail_type, group_id, user_id, i)
-                                if (msg_) msg.push(msg_)
-                            }
-                        } else {
-                            msg = await this.get_file_id(reply)
-                        }
-                    }
-                    /** at可以跟文本一起发 */
-                    if (!msg || msg.length == 0) return
-                    if (Array.isArray(msg) && !msg[1]) msg = msg[0]
-                    return await WeChat.send_message(detail_type, group_id || user_id, msg)
-                }
+                return await Yunzai.reply(reply, data)
             },
             toString: () => {
                 return data.alt_message
@@ -311,6 +230,96 @@ export let Yunzai = {
             return { type: "wx.emoji", data: { file_id: file_id } }
         } else {
             return { type: "image", data: { file_id: file_id } }
+        }
+    },
+    makeForwardMsg: async (forwardMsg, data = {}) => {
+        const messages = {}
+        const newmsg = []
+
+        /** 针对无限套娃的转发进行处理 */
+        for (const i_msg of forwardMsg) {
+            /** message -> 对象 -> data.type=test ->套娃转发 */
+            const formsg = i_msg?.message
+            if (formsg && typeof formsg === "object") {
+                /** 套娃转发 */
+                if (formsg?.data?.type === "test") {
+                    newmsg.push(...formsg.msg)
+                } else if (Array.isArray(formsg)) {
+                    for (const arr of formsg) {
+                        if (typeof arr === "string") newmsg.push({ type: "forward", text: arr })
+                        else newmsg.push(arr)
+                    }
+                } else {
+                    /** 普通对象 */
+                    newmsg.push(formsg)
+                }
+            } else {
+                /** 日志特殊处理 */
+                if (data.alt_message && /^#.*日志$/.test(data.alt_message)) {
+                    let splitMsg
+                    for (const i of forwardMsg) {
+                        splitMsg = i.message.split("\n[").map(element => {
+                            if (element.length > 100)
+                                element = element.substring(0, 100) + "日志过长..."
+                            return { type: "forward", text: `[${element.trim()}\n` }
+                        })
+                    }
+                    newmsg.push(...splitMsg.slice(0, 50))
+                } else {
+                    /** 正常文本 */
+                    newmsg.push({ type: "forward", text: formsg })
+                }
+            }
+        }
+        /** 对一些重复元素进行去重 */
+        messages.msg = Array.from(new Set(newmsg.map(JSON.stringify))).map(JSON.parse)
+        messages.data = { type: "test", text: "forward" }
+        return messages
+    },
+    reply: async (reply, data = {}) => {
+        const { group_id, detail_type, user_id } = data
+        /** 转换格式 */
+        let msg = []
+        /** 转发消息 */
+        if (reply?.data?.type === "test") {
+            for (let i of reply.msg) {
+                switch (i.type) {
+                    case "forward":
+                        await WeChat.send_message(detail_type, group_id || user_id, { type: "text", data: { text: i.text } })
+                        break
+                    case "image":
+                        const image_msg = await Yunzai.get_file_id(i)
+                        await WeChat.send_message(detail_type, group_id || user_id, image_msg)
+                        break
+                    default:
+                        break
+                }
+            }
+        } else {
+            /** 纯文本 */
+            if (typeof reply === "string") {
+                msg = { type: "text", data: { text: reply } }
+            }
+            /** base64二进制 */
+            else if (reply instanceof Uint8Array) {
+                msg = await Yunzai.get_file_id({ type: "image", file: reply })
+            }
+            /** 对象 */
+            else if (typeof reply === "object") {
+                /** 判断是否可迭代 */
+                if (reply !== null && typeof reply[Symbol.iterator] === 'function') {
+                    for (let i of reply) {
+                        const msg_ = await Yunzai.type_msg(detail_type, group_id, user_id, i)
+                        if (msg_) msg.push(msg_)
+                    }
+                } else {
+                    msg = await Yunzai.get_file_id(reply)
+                }
+            }
+            /** at可以跟文本一起发 */
+            if (!msg || msg.length == 0) return
+            if (Array.isArray(msg) && !msg[1]) msg = msg[0]
+            return await WeChat.send_message(detail_type, group_id || user_id, msg)
         }
     }
 }

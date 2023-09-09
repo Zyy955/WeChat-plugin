@@ -159,6 +159,25 @@ server.on('connection', (ws) => {
                 /** 获取群聊列表啦~ */
                 const group_list = await WeChat.get_group_list()
                 for (let i of group_list) { WeChat.group[i.group_id] = i.group_name }
+                /** 创建一些虚假参数 用于推送米游社公告 */
+                Bot[WeChat.BotCfg.user_id] = {
+                    user_id: WeChat.BotCfg.user_id,
+                    pickGroup: (groupId) => {
+                        const data = {
+                            detail_type: "group",
+                            group_id: groupId,
+                            user_id: ""
+                        }
+                        return {
+                            sendMsg: async (reply) => {
+                                return await Yunzai.reply(reply, data)
+                            },
+                            makeForwardMsg: async (forwardMsg) => {
+                                return await Yunzai.makeForwardMsg(forwardMsg)
+                            },
+                        }
+                    }
+                }
                 break
             /** 群消息 */
             case "group":
