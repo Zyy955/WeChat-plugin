@@ -445,8 +445,12 @@ let _loader = {
         let id = msgsscr ? e.user_id : Bot.uin
 
         if (e.isGroup) {
-            let info = await e.bot.getGroupMemberInfo(e.group_id, id)
-            name = info.card || info.nickname
+            try {
+                let info = await e.bot.getGroupMemberInfo(e.group_id, id)
+                name = info.card || info.nickname
+            } catch (err) {
+                logger.error(err.message)
+            }
         }
 
         let userInfo = {
@@ -500,6 +504,10 @@ if (WeChat.Yz.name === "Miao-Yunzai") {
     PluginsLoader.dealMsg = _loader.dealMsg
     /** 劫持黑白名单 */
     PluginsLoader.checkBlack = _loader.checkBlack
+    /** 本体转发 */
+    common.makeForwardMsg = async function (e, msg = [], dec = '', msgsscr = false) {
+        return await _loader.makeForwardMsg(e, msg, dec, msgsscr)
+    }
 }
 /** 对喵云崽的转发进行劫持修改，兼容最新的icqq转发 */
 else {
