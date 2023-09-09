@@ -37,9 +37,9 @@ let _loader = {
                         e.img.push(val.url)
                         break
                     case 'at':
-                        if (val.qq == e.bot.uin || val.qq == WeChat.BotCfg.user_id) {
+                        if (val.qq == e.bot.uin || val.qq == e.uin) {
                             e.atBot = true
-                        } else if (val.id == e.bot.tiny_id || val.id == WeChat.BotCfg.user_id) {
+                        } else if (val.id == e.bot.tiny_id || val.id == e.uin) {
                             e.atBot = true
                             /** 多个at 以最后的为准 */
                         } else if (val.id) {
@@ -256,7 +256,7 @@ let _loader = {
                         e.img.push(val.url)
                         break
                     case 'at':
-                        if (val.qq == Bot.uin) {
+                        if (val.qq == Bot.uin || val.qq == e.uin) {
                             e.atBot = true
                         } else {
                             /** 多个at 以最后的为准 */
@@ -493,7 +493,7 @@ let _loader = {
 }
 
 /** 劫持修改主体一些基础处理方法 */
-if (WeChat.Yz.name === "miao-yunzai") {
+if (WeChat.Yz.name === "Miao-Yunzai") {
     /** 劫持回复方法 */
     PluginsLoader.reply = _loader.reply
     /** 劫持处理消息 */

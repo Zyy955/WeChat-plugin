@@ -8,7 +8,7 @@ let _plugins = {
 let Puppeteer
 
 /** 喵崽 */
-if (WeChat.Yz.name === "miao-yunzai") {
+if (WeChat.Yz.name === "Miao-Yunzai") {
     Puppeteer = (await import("../../../renderers/puppeteer/lib/puppeteer.js")).default
     /** 劫持原方法 */
     Puppeteer.prototype.screenshot = async function (name, data = {}) {

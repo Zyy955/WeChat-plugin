@@ -14,7 +14,7 @@ global.WeChat = {
 const Yz = JSON.parse(fs.readFileSync("./package.json", "utf-8"))
 const Wx = JSON.parse(fs.readFileSync("./plugins/WeChat-plugin/package.json", "utf-8"))
 WeChat.Yz = {
-    name: Yz.name,
+    name: Yz.name === "miao-yunzai" ? "Miao-Yunzai" : "Yunzai-Bot",
     version: Yz.version,
     Wx_name: Wx.name,
     Wx_version: Wx.version
