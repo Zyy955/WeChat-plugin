@@ -1,7 +1,11 @@
+import fs from "fs"
 import lodash from "lodash"
 import cfg from "../../../lib/config/config.js"
 import common from "../../../lib/common/common.js"
 import PluginsLoader from "../../../lib/plugins/loader.js"
+
+let is_revise = false
+if (fs.existsSync(process.cwd() + "/plugins/QQGuild-plugin")) is_revise = true
 
 let _loader = {
     /**
@@ -504,21 +508,22 @@ const YzBot = {
 }
 
 /** 劫持修改主体一些基础处理方法 */
-if (WeChat.Yz.name === "Miao-Yunzai") {
+if (WeChat.Yz.name === "Miao-Yunzai" && !is_revise) {
     /** 劫持回复方法 */
-    PluginsLoader.reply = async function (e) {
+    PluginsLoader.reply = function (e) {
         if (e?.adapter) return _loader.reply.call(this, e)
         return YzBot.reply.call(this, e)
     }
     /** 劫持处理消息 */
-    PluginsLoader.dealMsg = async function (e) {
+    PluginsLoader.dealMsg = function (e) {
         if (e?.adapter) return _loader.dealMsg.call(this, e)
         return YzBot.dealMsg.call(this, e)
     }
     /** 劫持黑白名单 */
-    PluginsLoader.checkBlack = async function (e) {
+    PluginsLoader.checkBlack = function (e) {
         if (e?.adapter) return _loader.checkBlack.call(this, e)
-        return YzBot.checkBlack.call(this, e)
+        const ti = YzBot.checkBlack.call(this, e)
+        return ti
     }
 
     /** 本体转发 */
@@ -527,19 +532,19 @@ if (WeChat.Yz.name === "Miao-Yunzai") {
     }
 }
 /** 对喵云崽的转发进行劫持修改，兼容最新的icqq转发 */
-else {
+else if (!is_revise) {
     /** 劫持回复方法 */
-    PluginsLoader.reply = async function (e) {
+    PluginsLoader.reply = function (e) {
         if (e?.adapter) return _loader.Yz_reply.call(this, e)
         return YzBot.reply.call(this, e)
     }
     /** 劫持处理消息 */
-    PluginsLoader.dealMsg = async function (e) {
+    PluginsLoader.dealMsg = function (e) {
         if (e?.adapter) return _loader.Yz_dealMsg.call(this, e)
         return YzBot.dealMsg.call(this, e)
     }
     /** 劫持黑白名单 */
-    PluginsLoader.checkBlack = async function (e) {
+    PluginsLoader.checkBlack = function (e) {
         if (e?.adapter) return _loader.Yz_checkBlack.call(this, e)
         return YzBot.checkBlack.call(this, e)
     }
