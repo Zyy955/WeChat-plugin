@@ -496,14 +496,31 @@ let _loader = {
     }
 }
 
+/** 保存原有方法 */
+const YzBot = {
+    reply: PluginsLoader.reply,
+    dealMsg: PluginsLoader.dealMsg,
+    checkBlack: PluginsLoader.checkBlack
+}
+
 /** 劫持修改主体一些基础处理方法 */
 if (WeChat.Yz.name === "Miao-Yunzai") {
     /** 劫持回复方法 */
-    PluginsLoader.reply = _loader.reply
+    PluginsLoader.reply = async function (e) {
+        if (e?.adapter) return _loader.reply.call(this, e)
+        return YzBot.reply.call(this, e)
+    }
     /** 劫持处理消息 */
-    PluginsLoader.dealMsg = _loader.dealMsg
+    PluginsLoader.dealMsg = async function (e) {
+        if (e?.adapter) return _loader.dealMsg.call(this, e)
+        return YzBot.dealMsg.call(this, e)
+    }
     /** 劫持黑白名单 */
-    PluginsLoader.checkBlack = _loader.checkBlack
+    PluginsLoader.checkBlack = async function (e) {
+        if (e?.adapter) return _loader.checkBlack.call(this, e)
+        return YzBot.checkBlack.call(this, e)
+    }
+
     /** 本体转发 */
     common.makeForwardMsg = async function (e, msg = [], dec = '', msgsscr = false) {
         return await _loader.makeForwardMsg(e, msg, dec, msgsscr)
@@ -512,11 +529,20 @@ if (WeChat.Yz.name === "Miao-Yunzai") {
 /** 对喵云崽的转发进行劫持修改，兼容最新的icqq转发 */
 else {
     /** 劫持回复方法 */
-    PluginsLoader.reply = _loader.Yz_reply
+    PluginsLoader.reply = async function (e) {
+        if (e?.adapter) return _loader.Yz_reply.call(this, e)
+        return YzBot.reply.call(this, e)
+    }
     /** 劫持处理消息 */
-    PluginsLoader.dealMsg = _loader.Yz_dealMsg
+    PluginsLoader.dealMsg = async function (e) {
+        if (e?.adapter) return _loader.Yz_dealMsg.call(this, e)
+        return YzBot.dealMsg.call(this, e)
+    }
     /** 劫持黑白名单 */
-    PluginsLoader.checkBlack = _loader.Yz_checkBlack
+    PluginsLoader.checkBlack = async function (e) {
+        if (e?.adapter) return _loader.Yz_checkBlack.call(this, e)
+        return YzBot.checkBlack.call(this, e)
+    }
 
     /** 本体转发 */
     common.makeForwardMsg = async function (e, msg = [], dec = '', msgsscr = false) {

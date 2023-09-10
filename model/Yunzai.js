@@ -83,6 +83,7 @@ export let Yunzai = {
         }
 
         let e = {
+            adapter: "WeChat",
             uin: WeChat.BotCfg.user_id,
             post_type: "message",
             message_id: data.message_id,
