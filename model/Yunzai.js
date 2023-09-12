@@ -7,7 +7,7 @@ export let Yunzai = {
     async message(WeChat_data) {
         let atme = false
         let message = []
-        let raw_message = ""
+        let source = {}
         const msg = WeChat_data.message
         if (!msg) return false
 
@@ -15,23 +15,16 @@ export let Yunzai = {
             const { type, data } = i
             switch (type) {
                 case "text":
-                    raw_message += data.text
                     message.push({ type: "text", text: data.text })
                     break
                 case "mention":
-                    if (data.user_id === WeChat.BotCfg.user_id) {
-                        atme = true
-                        raw_message += `@${WeChat.BotCfg.user_name}`
-                    } else {
-                        raw_message += `@${data.user_id}`
-                        message.push({ type: "at", text: "", qq: data.user_id })
-                    }
+                    if (data.user_id === WeChat.BotCfg.user_id) atme = true
+                    else message.push({ type: "at", text: "", qq: data.user_id })
                     break
                 case "mention_all":
                     break
                 case "image":
                     const image = await WeChat.get_file("url", data.file_id)
-                    raw_message += `{image:${image.name}}`
                     message.push({ type: "image", name: image.name, url: image.url })
                     break
                 case "voice":
@@ -45,9 +38,10 @@ export let Yunzai = {
                 case "location":
                     break
                 case "reply":
+                    const res = JSON.parse(await redis.get(i.data.message_id) || { id: "", user_id: "" })
+                    source = { message: res.id, rand: 0, seq: 0, time: 0, user_id: res.user_id }
                     break
                 case "wx.emoji":
-                    raw_message += `{emoji:${data.file_id}}`
                     message.push({ type: "emoji", text: data.file_id })
                     break
                 case "wx.link":
@@ -56,14 +50,16 @@ export let Yunzai = {
                     break
             }
         }
-        return { message, raw_message, atme }
+        return { message, atme, source }
     },
     /** 消息转换为Yunzai格式 */
     async msg(data) {
+        /** 存一份原始消息，用于引用消息 */
+        await redis.set(data.message_id, JSON.stringify({ id: data.alt_message, user_id: data.user_id }), { EX: 1800 })
         let user_id = data.user_id
         const { group_id, detail_type, self, time } = data
         /** 构建Yunzai的message */
-        let { message, raw_message, atme } = await this.message(data)
+        let { message, atme, source } = await this.message(data)
         /** 获取用户名称 */
         let user_name
         if (detail_type === "private" || detail_type === "wx.get_private_poke") {
@@ -99,6 +95,7 @@ export let Yunzai = {
                 card: user_name,
                 role: "member",
             },
+            source: source,
             group_id: group_id,
             group_name: WeChat.group[group_id],
             self_id: WeChat.BotCfg.user_id,
@@ -201,12 +198,24 @@ export let Yunzai = {
         let type = "data"
         let file = i.file
 
+        /** 特殊格式？... */
+        if (i.file?.type === "Buffer") {
+            file = `base64://${Buffer.from(i.file.data).toString('base64')}`
+        }
         /** 将二进制的base64转字符串 防止报错 */
-        if (i.file instanceof Uint8Array) {
+        else if (i.file instanceof Uint8Array) {
             file = `base64://${Buffer.from(i.file).toString('base64')}`
-        } else {
+        }
+        /** 天知道从哪里蹦出来的... */
+        else if (i.file instanceof fs.ReadStream) {
+            file = `./${i.file.path}`
+        }
+        /** 去掉本地图片的前缀 */
+        else if (typeof i === "string") {
             file = i.file.replace(/^file:(\/\/\/|\/\/)/, "") || i.url
         }
+
+
         /** base64 */
         if (/^base64:\/\//.test(file)) {
             file = file.replace(/^base64:\/\//, "")
@@ -221,12 +230,18 @@ export let Yunzai = {
         else if (/^http(s)?:\/\//.test(file)) {
             type = "url"
             name = file.match(/\/([^/]+)$/)[1]
-        } else {
-            // 未知...
+        }
+        /** 留个容错防止炸了 */
+        else {
+            return { type: "text", data: { text: "未知格式...请寻找作者适配..." } }
         }
 
-        /** 上传文件 获取文件id 获取为空我也不知道为啥... */
-        const file_id = (await WeChat.upload_file(type, name, file))?.file_id || ""
+        /** 上传文件 获取文件id */
+        const file_id = (await WeChat.upload_file(type, name, file))?.file_id
+
+        /** 处理文件id为空 */
+        if (!file_id) return { type: "text", data: { text: "图片上传失败..." } }
+
         /** 特殊处理表情包 */
         if (/.gif$/.test(name)) {
             return { type: "wx.emoji", data: { file_id: file_id } }
@@ -285,6 +300,7 @@ export let Yunzai = {
         /** 转发消息 */
         if (reply?.data?.type === "test") {
             for (let i of reply.msg) {
+                await new Promise((resolve) => setTimeout(resolve, 500))
                 switch (i.type) {
                     case "forward":
                         await WeChat.send_message(detail_type, group_id || user_id, { type: "text", data: { text: i.text } })

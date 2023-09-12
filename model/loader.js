@@ -148,9 +148,7 @@ let _loader = {
                         text = lodash.truncate(e.sender.card, { length: 10 })
                     }
                     if (at === true) {
-                        if (typeof e.user_id === "number")
-                            at = Number(e.user_id) || e.user_id
-                        else at = e.user_id.trim()
+                        at = Number(e.user_id) || String(e.user_id)
                     } else if (!isNaN(at)) {
                         if (e.isGuild) {
                             text = e.sender?.nickname
