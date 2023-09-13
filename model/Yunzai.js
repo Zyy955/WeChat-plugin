@@ -81,7 +81,7 @@ export let Yunzai = {
         let e = {
             atBot: atme,
             adapter: "WeChat",
-            uin: WeChat.BotCfg.user_id,
+            uin: WeChat?.BotCfg?.user_id || "",
             post_type: "message",
             message_id: data.message_id,
             user_id: user_id,
@@ -211,7 +211,7 @@ export let Yunzai = {
             file = `./${i.file.path}`
         }
         /** 去掉本地图片的前缀 */
-        else if (typeof i === "string") {
+        else if (typeof i.file === "string") {
             file = i.file.replace(/^file:(\/\/\/|\/\/)/, "") || i.url
         }
 
