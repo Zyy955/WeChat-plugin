@@ -98,7 +98,7 @@ export let Yunzai = {
             source: source,
             group_id: group_id,
             group_name: WeChat.group[group_id],
-            self_id: WeChat.BotCfg.user_id,
+            self_id: WeChat?.BotCfg?.user_id,
             font: "宋体",
             seq: data.message_id,
             atme: atme,
@@ -229,7 +229,7 @@ export let Yunzai = {
         /** url图片 */
         else if (/^http(s)?:\/\//.test(file)) {
             type = "url"
-            name = file.match(/\/([^/]+)$/)[1]
+            name = file.match(/\/([^/]+)$/)?.[1] || `${Date.now()}.png`
         }
         /** 留个容错防止炸了 */
         else {
