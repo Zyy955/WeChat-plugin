@@ -3,7 +3,7 @@ import { WebSocketServer } from "ws"
 import { Yunzai } from "./Yunzai.js"
 import PluginsLoader from "../../../lib/plugins/loader.js"
 
-const { port, path } = WeChat.config
+const { port, path } = WeChat.cfg.cfg
 const Bot_name = "[WeChatBot] "
 const server = new WebSocketServer({ port: port, path: path })
 logger.mark(logger.green(`${Bot_name}ws服务器已启动：ws://localhost:${port}${path}`))
@@ -129,7 +129,7 @@ let WeChatBot = {
     }
 }
 
-WeChat = { ...WeChat, ...WeChatBot }
+WeChat.api = { ...WeChatBot }
 
 /** 监听连接事件 */
 server.on('connection', (ws) => {
@@ -155,10 +155,29 @@ server.on('connection', (ws) => {
             case "status_update":
                 logger.info(Bot_name + "状态更新：ComWechat已连接")
                 /** 加载机器人自身id到全局变量中 */
-                WeChat.BotCfg = await WeChat.get_self_info()
+                WeChat.BotCfg = await WeChat.api.get_self_info()
+                await new Promise((resolve) => setTimeout(resolve, 500))
                 /** 获取群聊列表啦~ */
-                const group_list = await WeChat.get_group_list()
-                for (let i of group_list) { WeChat.group[i.group_id] = i.group_name }
+                let group_list
+                for (let retries = 0; retries < 3; retries++) {
+                    group_list = await WeChat.api.get_group_list()
+                    if (group_list && typeof group_list === "object") {
+                        logger.info("[WeChatBot] 获取微信群聊列表成功...")
+                        break
+                    } else {
+                        logger.error(`[WeChatBot] 获取微信群聊列表失败，正在重试...当前次数：${retries + 1} `)
+                    }
+                    await new Promise((resolve) => setTimeout(resolve, 500))
+                }
+
+                if (!group_list) logger.error("[WeChatBot] 微信群聊列表获取失败，超过重试次数，已终止")
+
+                if (group_list && typeof group_list === "object")
+                    for (let i of group_list) {
+                        /** 添加群聊列表到Bot.gl中，用于主动发送消息 */
+                        Bot.gl.set(i.group_id, { group_id: i.group_id, group_name: i.name, })
+                    }
+
                 /** 创建一些虚假参数 用于推送米游社公告 */
                 Bot[WeChat.BotCfg.user_id] = {
                     user_id: WeChat.BotCfg.user_id,
@@ -195,8 +214,8 @@ server.on('connection', (ws) => {
             case "wx.friend_request":
                 logger.info(Bot_name + "好友申请：" + `用户 ${user_id} 请求添加好友 请求理由：${parse.content}`)
                 /** 通过好友申请 */
-                if (WeChat.config.autoFriend == 1) {
-                    WeChat.accept_friend(parse.v3, parse.v4)
+                if (WeChat.cfg.cfg.autoFriend == 1) {
+                    WeChat.api.accept_friend(parse.v3, parse.v4)
                     logger.info(Bot_name + `已通过用户 ${user_id} 的好友申请`)
                 }
                 break

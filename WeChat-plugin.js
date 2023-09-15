@@ -1,6 +1,6 @@
-import "./model/config.js"
 import "./model/loader.js"
 import "./model/puppeteer.js"
+import "./model/config.js"
 import "./model/ws.js"
 import fs from "fs"
 import crypto from "crypto"

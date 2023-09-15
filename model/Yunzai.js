@@ -63,9 +63,9 @@ export let Yunzai = {
         /** 获取用户名称 */
         let user_name
         if (detail_type === "private" || detail_type === "wx.get_private_poke") {
-            user_name = (await WeChat.get_user_info(user_id))?.user_name || ""
+            user_name = (await WeChat.api.get_user_info(user_id))?.user_name || ""
         } else {
-            user_name = (await WeChat.get_group_member_info(group_id, user_id))?.user_name || ""
+            user_name = (await WeChat.api.get_group_member_info(group_id, user_id))?.user_name || ""
         }
 
         let member = {
@@ -81,7 +81,7 @@ export let Yunzai = {
         let e = {
             atBot: atme,
             adapter: "WeChat",
-            uin: WeChat?.BotCfg?.user_id || "",
+            uin: self.user_id,
             post_type: "message",
             message_id: data.message_id,
             user_id: user_id,
@@ -97,8 +97,8 @@ export let Yunzai = {
             },
             source: source,
             group_id: group_id,
-            group_name: WeChat.group[group_id],
-            self_id: WeChat?.BotCfg?.user_id,
+            group_name: Bot.gl.get(group_id)?.group_name || "",
+            self_id: self.user_id,
             font: "宋体",
             seq: data.message_id,
             atme: atme,
@@ -168,25 +168,25 @@ export let Yunzai = {
     },
     /** 转换格式为WeChat能使用的 */
     async type_msg(detail_type, group_id, user_id, i) {
-        if (typeof i === "string") return { type: "text", data: { text: i } }
+        if (typeof i === "string") return { type: "text", data: { text: i.replace("<lora", "lora") } }
         switch (i.type) {
             /** 返回对象 组合发送 */
             case "at":
                 return { type: "mention", data: { user_id: i.qq === 0 ? i.id : i.qq } }
             /** 返回对象 组合发送 */
             case "text":
-                return { type: "text", data: { text: i.text } }
+                return { type: "text", data: { text: i.text.replace("<lora", "lora") } }
             /** 返回对象 组合发送 */
             case "emoji":
                 return { type: "wx.emoji", data: { file_id: i.text } }
             /** 转发消息直接分片发送 */
             case "forward":
-                await WeChat.send_message(detail_type, group_id || user_id, { type: "text", data: { text: i.text } })
+                await WeChat.api.send_message(detail_type, group_id || user_id, { type: "text", data: { text: i.text.replace("<lora", "lora") } })
                 return
             /** 图片直接上传发送 */
             case "image":
                 const image_msg = await this.get_file_id(i)
-                await WeChat.send_message(detail_type, group_id || user_id, image_msg)
+                await WeChat.api.send_message(detail_type, group_id || user_id, image_msg)
                 return
             default:
                 return
@@ -237,7 +237,13 @@ export let Yunzai = {
         }
 
         /** 上传文件 获取文件id */
-        const file_id = (await WeChat.upload_file(type, name, file))?.file_id
+        let file_id
+        /** 如果获取为空 则进行重试 最多3次 */
+        for (let retries = 0; retries < 3; retries++) {
+            file_id = (await WeChat.api.upload_file(type, name, file))?.file_id
+            if (file_id) break
+            else logger.error(`第${retries + 1}次上传文件失败，正在重试...`)
+        }
 
         /** 处理文件id为空 */
         if (!file_id) return { type: "text", data: { text: "图片上传失败..." } }
@@ -303,11 +309,11 @@ export let Yunzai = {
                 await new Promise((resolve) => setTimeout(resolve, 500))
                 switch (i.type) {
                     case "forward":
-                        await WeChat.send_message(detail_type, group_id || user_id, { type: "text", data: { text: i.text } })
+                        await WeChat.api.send_message(detail_type, group_id || user_id, { type: "text", data: { text: i.text.replace("<lora", "lora") } })
                         break
                     case "image":
                         const image_msg = await Yunzai.get_file_id(i)
-                        await WeChat.send_message(detail_type, group_id || user_id, image_msg)
+                        await WeChat.api.send_message(detail_type, group_id || user_id, image_msg)
                         break
                     default:
                         break
@@ -316,7 +322,7 @@ export let Yunzai = {
         } else {
             /** 纯文本 */
             if (typeof reply === "string") {
-                msg = { type: "text", data: { text: reply } }
+                msg = { type: "text", data: { text: reply.replace("<lora", "lora") } }
             }
             /** base64二进制 */
             else if (reply instanceof Uint8Array) {
@@ -337,38 +343,7 @@ export let Yunzai = {
             /** at可以跟文本一起发 */
             if (!msg || msg.length == 0) return
             if (Array.isArray(msg) && !msg[1]) msg = msg[0]
-            return await WeChat.send_message(detail_type, group_id || user_id, msg)
+            return await WeChat.api.send_message(detail_type, group_id || user_id, msg)
         }
     }
 }
-
-
-
-
-/** 根据传入的group_id长度决定使用原方法还是自定义方法 */
-Bot.WeChat_Info = Bot.getGroupMemberInfo
-Bot.getGroupMemberInfo = async (group_id, id) => {
-    if (group_id.toString().length > 10) {
-        return {
-            group_id: group_id,
-            user_id: id,
-            nickname: "WeChat-Bot",
-            card: "",
-            sex: "female",
-            age: 6,
-            join_time: "",
-            last_sent_time: "",
-            level: 1,
-            role: "member",
-            title: "",
-            title_expire_time: "",
-            shutup_time: 0,
-            update_time: "",
-            area: "南极洲",
-            rank: "潜水",
-        }
-    } else {
-        return Bot.WeChat_Info(group_id, id)
-    }
-}
-
