@@ -69,7 +69,7 @@ if (!QQGuild)
             return await ws.reply(data, content, anony)
         }
         /** 带@ = PC微信HOOK */
-        else if (_info?.group_id.includes("@")) {
+        else if (_info?.group_id && String(_info?.group_id).includes("@")) {
             const data = {
                 detail_type: "group",
                 group_id: _info.group_id,
