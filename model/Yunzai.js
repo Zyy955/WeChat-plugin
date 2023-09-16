@@ -24,7 +24,7 @@ export let Yunzai = {
                 case "mention_all":
                     break
                 case "image":
-                    const image = await WeChat.get_file("url", data.file_id)
+                    const image = await WeChat.api.get_file("url", data.file_id)
                     message.push({ type: "image", name: image.name, url: image.url })
                     break
                 case "voice":
