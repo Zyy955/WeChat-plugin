@@ -188,7 +188,7 @@ server.on('connection', (ws) => {
                 }
                 Bot[uin] = {
                     uin: uin,
-                    nickname: "PC-HOOK-微信Bot",
+                    nickname: WeChat.cfg.cfg.name,
                     avatar: WeChat?.BotCfg?.["wx.avatar"],
                     stat: { start_time: Date.now() / 1000 },
                     apk: { display: WeChat.cfg.name, version: WeChat.cfg.ver },
