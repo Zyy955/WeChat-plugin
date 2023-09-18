@@ -11,4 +11,4 @@ if (!fs.existsSync(_path)) {
 /** 保存基本配置、插件版本、插件名称 */
 const cfg = Yaml.parse(fs.readFileSync(_path, "utf8"))
 const wx = JSON.parse(fs.readFileSync("./plugins/WeChat-plugin/package.json", "utf-8"))
-WeChat.cfg = { ...WeChat, cfg: cfg, ver: wx.version, name: wx.name, _path: _path }
+WeChat.cfg = { ...WeChat, cfg: cfg, ver: wx.version, name: wx.name, _path: _path, bot: wx.CWeChatRobot }

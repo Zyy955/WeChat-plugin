@@ -178,9 +178,24 @@ server.on('connection', (ws) => {
                         Bot.gl.set(i.group_id, { group_id: i.group_id, group_name: i.name, })
                     }
 
-                /** 创建一些虚假参数 用于推送米游社公告 */
-                Bot[WeChat.BotCfg.user_id] = {
-                    user_id: WeChat.BotCfg.user_id,
+                /** 米游社推送、椰奶状态 */
+                const uin = WeChat?.BotCfg?.user_id
+                if (!Bot?.adapter) {
+                    Bot.adapter = [Bot.uin]
+                    Bot.adapter.push(uin)
+                } else {
+                    Bot.adapter.push(uin)
+                }
+                Bot[uin] = {
+                    uin: uin,
+                    nickname: "PC-HOOK-微信Bot",
+                    avatar: WeChat?.BotCfg?.["wx.avatar"],
+                    stat: { start_time: Date.now() / 1000 },
+                    apk: { display: WeChat.cfg.name, version: WeChat.cfg.ver },
+                    fl: new Map(),
+                    gl: new Map(),
+                    version: { id: "PC", name: "微信Bot", version: WeChat.cfg.bot },
+                    user_id: uin,
                     pickGroup: (groupId) => {
                         const data = {
                             detail_type: "group",

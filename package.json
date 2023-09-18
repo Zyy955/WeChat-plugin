@@ -4,6 +4,7 @@
   "github": "https://github.com/Zyy955/WeChat-plugin",
   "gitee": "https://gitee.com/Zyy955/WeChat-plugin",
   "version": "0.2.0",
+  "CWeChatRobot": "0.0.8",
   "type": "module",
   "dependencies": {
     "ws": "^8.13.0",
