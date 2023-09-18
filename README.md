@@ -143,6 +143,15 @@ websocket_buffer_size = 4
 
 默认自动通过好友申请，如果关闭请前往配置修改`plugins/WeChat-plugin/config.yaml`
 
+#### 修改椰奶状态显示名称
+
+yaml不支持表情储存QWQ
+
+```
+#微信修改名称<新名称>
+```
+
+
 ## 爱发电
 
 ![爱发电](https://cdn.jsdelivr.net/gh/Zyy955/imgs/img/202308271209508.jpeg)

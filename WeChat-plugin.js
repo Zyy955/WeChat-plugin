@@ -25,6 +25,11 @@ export class WeChat_ extends plugin {
                 {
                     reg: /^#设置主人$/,
                     fnc: 'master'
+                },
+                {
+                    reg: /^#微信修改名称.+/,
+                    fnc: 'Bot_name',
+                    permission: "master"
                 }
             ]
         })
@@ -71,6 +76,16 @@ export class WeChat_ extends plugin {
             this.setContext('SetAdmin')
             e.reply([segment.at(e.user_id), `请输入控制台的验证码`])
         }
+    }
+
+    async Bot_name(e) {
+        const msg = e.msg.replace("#微信修改名称", "").trim()
+        const _path = WeChat.cfg._path
+        let cfg = fs.readFileSync(_path, "utf8")
+        cfg = cfg.replace(RegExp("name:.*"), `name: ${msg}`)
+        fs.writeFileSync(_path, cfg, "utf8")
+        Bot[WeChat?.BotCfg?.user_id].nickname = msg
+        e.reply(`修改成功，新名称为：${msg}`, false, { at: true })
     }
 
     SetAdmin() {
