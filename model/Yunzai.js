@@ -261,11 +261,10 @@ export let Yunzai = {
 
         /** 针对无限套娃的转发进行处理 */
         for (const i_msg of forwardMsg) {
-            /** message -> 对象 -> data.type=test ->套娃转发 */
             const formsg = i_msg?.message
             if (formsg && typeof formsg === "object") {
                 /** 套娃转发 */
-                if (formsg?.data?.type === "test") {
+                if (formsg?.data?.type === "test" || formsg?.type === "xml") {
                     newmsg.push(...formsg.msg)
                 } else if (Array.isArray(formsg)) {
                     for (const arr of formsg) {
@@ -296,7 +295,7 @@ export let Yunzai = {
         }
         /** 对一些重复元素进行去重 */
         messages.msg = Array.from(new Set(newmsg.map(JSON.stringify))).map(JSON.parse)
-        messages.data = { type: "test", text: "forward" }
+        messages.data = { type: "test", text: "forward", app: "com.tencent.multimsg", meta: { detail: { news: [{ text: "1" }] }, resid: "", uniseq: "", summary: "" } }
         return messages
     },
     reply: async (reply, data = {}) => {
@@ -304,9 +303,9 @@ export let Yunzai = {
         /** 转换格式 */
         let msg = []
         /** 转发消息 */
-        if (reply?.data?.type === "test") {
+        if (reply?.data?.type === "test" || reply?.type === "xml") {
             for (let i of reply.msg) {
-                await new Promise((resolve) => setTimeout(resolve, 500))
+                await new Promise((resolve) => setTimeout(resolve, 100))
                 switch (i.type) {
                     case "forward":
                         await WeChat.api.send_message(detail_type, group_id || user_id, { type: "text", data: { text: i.text.replace("<lora", "lora") } })
@@ -316,6 +315,7 @@ export let Yunzai = {
                         await WeChat.api.send_message(detail_type, group_id || user_id, image_msg)
                         break
                     default:
+                        await WeChat.api.send_message(detail_type, group_id || user_id, { type: "text", data: { text: JSON.stringify(i).replace("<lora", "lora") } })
                         break
                 }
             }
