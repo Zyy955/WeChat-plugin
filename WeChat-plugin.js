@@ -46,7 +46,8 @@ export class WeChat_ extends plugin {
         if (new_update.getPlugin(name)) {
             if (e.msg.includes("更新日志")) {
                 if (new_update.getPlugin(name)) {
-                    return e.reply(await new_update.getLog(name))
+                    e.reply(await new_update.getLog(name))
+                    return false
                 }
             } else {
                 if (this.e.msg.includes('强制'))
@@ -55,7 +56,7 @@ export class WeChat_ extends plugin {
                 if (new_update.isUp)
                     setTimeout(() => new_update.restart(), 2000)
             }
-            return
+            return false
         }
     }
 
