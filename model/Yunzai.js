@@ -129,7 +129,12 @@ export let Yunzai = {
                 },
                 makeForwardMsg: async (forwardMsg) => {
                     return await Yunzai.makeForwardMsg(forwardMsg, data)
-                }
+                },
+                pickMember: (id) => {
+                    if (id === user_id) {
+                        return member
+                    }
+                },
             },
             recall: () => {
                 return
