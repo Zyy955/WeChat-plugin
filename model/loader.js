@@ -89,7 +89,7 @@ if (!QQGuild && !fs.existsSync(process.cwd() + "/plugins/ws-plugin")) {
     Bot.getGroupMemberInfo = async function (group_id, user_id) {
         let result
         try {
-            result = await old.getGroupMemberInfo.call(this, group_id, user_id)
+            result = await WeChat.old.getGroupMemberInfo.call(this, group_id, user_id)
         } catch (error) {
             let nickname
             if (error.stack.includes('ws-plugin')) {
