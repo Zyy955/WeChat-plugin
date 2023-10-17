@@ -3,8 +3,8 @@ import "./model/puppeteer.js"
 import "./model/config.js"
 import "./model/ws.js"
 import fs from "fs"
-import Yaml from "yaml"
 import crypto from "crypto"
+import _Yaml from "./model/yaml.js"
 import { execSync } from "child_process"
 import { update } from "../other/update.js"
 
@@ -16,7 +16,7 @@ export class WeChat_ extends plugin {
     constructor() {
         super({
             name: "WeChat插件",
-            priority: 1,
+            priority: 10,
             rule: [
                 {
                     reg: /^#(微信|WeChat)(插件)?(强制)?更新(日志)?$/gi,
@@ -60,39 +60,36 @@ export class WeChat_ extends plugin {
             return false
         }
     }
-
     async master(e) {
-        /** 对用户id进行默认赋值 */
-        user = e.user_id
-        let cfg = fs.readFileSync("./config/config/other.yaml", "utf8")
+        let user_id = e.user_id
         if (e.at) {
+            const cfg = new _Yaml("./config/config/other.yaml")
             /** 存在at检测触发用户是否为主人 */
             if (!e.isMaster) return e.reply(`只有主人才能命令我哦~\n(*/ω＼*)`)
-            /** 检测被at的用户是否已经是主人 */
-            if (cfg.match(RegExp(`- "?${e.at}"?`)))
-                return e.reply([segment.at(e.at), "已经是主人了哦(〃'▽'〃)"])
-            user = e.at
-            e.reply(Yunzai.add(e))
+            user_id = e.at
+            /** 检测用户是否已经是主人 */
+            if (cfg.value("masterQQ", user_id)) return e.reply([segment.at(user_id), "已经是主人了哦(〃'▽'〃)"])
+            /** 添加主人 */
+            return await e.reply(apps.master(e, user_id))
         } else {
             /** 检测用户是否已经是主人 */
             if (e.isMaster) return e.reply([segment.at(e.user_id), "已经是主人了哦(〃'▽'〃)"])
-            /** 生成验证码 */
-            sign[e.user_id] = crypto.randomUUID()
-            logger.mark(`设置主人验证码：${logger.green(sign[e.user_id])}`)
-            /** 开始上下文 */
-            this.setContext('SetAdmin')
-            e.reply([segment.at(e.user_id), `请输入控制台的验证码`])
         }
+        /** 生成验证码 */
+        sign[user_id] = crypto.randomUUID()
+        logger.mark(`设置主人验证码：${logger.green(sign[e.user_id])}`)
+        await e.reply([segment.at(e.user_id), `请输入控制台的验证码`])
+        /** 开始上下文 */
+        return await this.setContext('SetAdmin')
     }
 
     async del_master(e) {
-        const file = "./config/config/other.yaml"
         if (!e.at) return e.reply("你都没有告诉我是谁！快@他吧！^_^")
-        let cfg = fs.readFileSync(file, "utf8")
-        if (!cfg.match(RegExp(`- "?${e.at}"?`)))
+        const cfg = new _Yaml("./config/config/other.yaml")
+        if (!cfg.value("masterQQ", e.at)) {
             return e.reply("这个人不是主人啦(〃'▽'〃)", false, { at: true })
-        cfg = cfg.replace(RegExp(`\\n  - "?${e.at}"?`), "")
-        fs.writeFileSync(file, cfg, "utf8")
+        }
+        cfg.delVal("masterQQ", e.at)
         e.reply([segment.at(e.at), "拜拜~"])
     }
 
@@ -111,7 +108,16 @@ export class WeChat_ extends plugin {
         this.finish('SetAdmin')
         /** 判断验证码是否正确 */
         if (this.e.msg.trim() === sign[this.e.user_id]) {
-            this.e.reply(add(this.e))
+            this.e.reply(apps.master(this.e))
+        } else {
+            return this.reply([segment.at(this.e.user_id), "验证码错误"])
+        }
+    } SetAdmin() {
+        /** 结束上下文 */
+        this.finish('SetAdmin')
+        /** 判断验证码是否正确 */
+        if (this.e.msg.trim() === sign[this.e.user_id]) {
+            this.e.reply(apps.master(this.e))
         } else {
             return this.reply([segment.at(this.e.user_id), "验证码错误"])
         }
@@ -119,33 +125,14 @@ export class WeChat_ extends plugin {
 }
 
 
-/** 设置主人 */
-function add(e) {
-    const _path = "./config/config/other.yaml"
-    let cfg = fs.readFileSync(_path, "utf8")
-    /** 使用正则表达式确认是TRSS还是Miao */
-    if (cfg.match(RegExp("master:"))) {
-        /** 保留注释 */
-        const document = Yaml.parseDocument(cfg)
-        const masterQQ = document.get("masterQQ")
-        masterQQ.add(user)
-        document.set("masterQQ", masterQQ)
-
-        const master = document.get("master")
-        master.add(`${e.self_id}:${user}`)
-        document.set("master", master)
-
-        cfg = document.toString()
-    } else {
-        /** 保留注释 */
-        const document = Yaml.parseDocument(cfg)
-        const masterQQ = document.get("masterQQ")
-        masterQQ.add(user)
-        document.set("masterQQ", masterQQ)
-        cfg = document.toString()
+let apps = {
+    /** 设置主人 */
+    master(e, user_id = null) {
+        user_id = user_id || e.user_id
+        const cfg = new _Yaml("./config/config/other.yaml")
+        cfg.addVal("masterQQ", user_id)
+        return [segment.at(user_id), "新主人好~(*/ω＼*)"]
     }
-    fs.writeFileSync(_path, cfg, "utf8")
-    return [segment.at(user), "新主人好~(*/ω＼*)"]
 }
 
 
