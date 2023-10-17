@@ -17,7 +17,7 @@ QQ交流群~欢迎加入：`884587317`
 
 微信应用端只支持在`Windows`环境运行，`Yunzai-Bot`没有要求
 
-如果需要linux运行，请查看我的另外一个项目 [Gitee](https://gitee.com/Zyy955/WeChat-Web-plugin)  |  [Github](https://gitee.com/Zyy955/WeChat-Web-plugin)
+如果需要linux运行，请查看我的另外一个项目 [Gitee](https://gitee.com/Zyy955/WeChat-Web-plugin)  |  [Github](https://github.com/Zyy955/WeChat-Web-plugin)
 
 ![Visitor Count](https://profile-counter.glitch.me/Zyy955-WeChat-plugin/count.svg)
 
