@@ -1,5 +1,6 @@
 import fs from "fs"
 import path from "path"
+import fetch from "node-fetch"
 import { fileTypeFromBuffer } from "file-type"
 
 export let Yunzai = {
@@ -205,11 +206,11 @@ export let Yunzai = {
 
         /** 特殊格式？... */
         if (i.file?.type === "Buffer") {
-            file = `base64://${Buffer.from(i.file.data).toString('base64')}`
+            file = `base64://${Buffer.from(i.file.data).toString("base64")}`
         }
         /** 将二进制的base64转字符串 防止报错 */
         else if (i.file instanceof Uint8Array) {
-            file = `base64://${Buffer.from(i.file).toString('base64')}`
+            file = `base64://${Buffer.from(i.file).toString("base64")}`
         }
         /** 天知道从哪里蹦出来的... */
         else if (i.file instanceof fs.ReadStream) {
@@ -217,7 +218,7 @@ export let Yunzai = {
         }
         /** 去掉本地图片的前缀 */
         else if (typeof i.file === "string") {
-            file = i.file.replace(/^file:(\/\/\/|\/\/)/, "") || i.url
+            file = i.file.replace(/^file:\/\//, "") || i.url
         }
 
 
@@ -233,8 +234,8 @@ export let Yunzai = {
         }
         /** url图片 */
         else if (/^http(s)?:\/\//.test(file)) {
-            type = "url"
-            name = file.match(/\/([^/]+)$/)?.[1] || `${Date.now()}.png`
+            file = Buffer.from(await (await fetch(file)).arrayBuffer()).toString("base64")
+            name = `${Date.now()}.${(await fileTypeFromBuffer(Buffer.from(file, "base64"))).ext}`
         }
         /** 留个容错防止炸了 */
         else {
