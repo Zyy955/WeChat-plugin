@@ -46,6 +46,7 @@ export let Yunzai = {
                     message.push({ type: "emoji", text: data.file_id })
                     break
                 case "wx.link":
+                    message.push({ type: "wx.link", data: data })
                     break
                 case "wx.app":
                     break
