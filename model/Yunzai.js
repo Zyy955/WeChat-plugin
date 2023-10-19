@@ -39,8 +39,12 @@ export let Yunzai = {
                 case "location":
                     break
                 case "reply":
-                    const res = JSON.parse(await redis.get(i.data.message_id) || { id: "", user_id: "" })
-                    source = { message: res.id, rand: 0, seq: 0, time: 0, user_id: res.user_id }
+                    try {
+                        const res = JSON.parse(await redis.get(i.data.message_id) || { id: "", user_id: "" })
+                        source = { message: res.id, rand: 0, seq: 0, time: 0, user_id: res.user_id }
+                    } catch (err) {
+                        logger.error(err)
+                    }
                     break
                 case "wx.emoji":
                     message.push({ type: "emoji", text: data.file_id })
@@ -57,7 +61,7 @@ export let Yunzai = {
     /** 消息转换为Yunzai格式 */
     async msg(data) {
         /** 存一份原始消息，用于引用消息 */
-        await redis.set(data.message_id, JSON.stringify({ id: data.alt_message, user_id: data.user_id }), { EX: 1800 })
+        if (data.message_id) await redis.set(data.message_id, JSON.stringify({ id: data.alt_message, user_id: data.user_id }), { EX: 1800 })
         let user_id = data.user_id
         const { group_id, detail_type, self, time } = data
         /** 构建Yunzai的message */
